@@ -1,103 +1,96 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useMemo, useState } from "react";
+import { AlertaCard, campo, DETECTOR, fmtData, fmtR$, Kpi, NIVEL, Titulo } from "@/components/ui";
+import type { DetectorId, Nivel } from "@/lib/engine/types";
+import { useDados } from "@/lib/store";
+
+export default function Painel() {
+  const { analise } = useDados();
+  const { resumo, alertas } = analise;
+  const [nivel, setNivel] = useState<Nivel | "todos">("todos");
+  const [detector, setDetector] = useState<DetectorId | "">("");
+  const [categoria, setCategoria] = useState("");
+  const [busca, setBusca] = useState("");
+
+  const categorias = useMemo(() => [...new Set(analise.produtos.map((p) => p.categoria))].sort(), [analise.produtos]);
+  const filtrados = alertas.filter(
+    (a) =>
+      (nivel === "todos" || a.nivel === nivel) &&
+      (!detector || a.detector === detector) &&
+      (!categoria || a.categoria === categoria) &&
+      (!busca || a.produto.toLowerCase().includes(busca.toLowerCase())),
+  );
+  const urgentes = alertas.filter((a) => a.nivel === "critico");
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <Titulo titulo="Painel do dia" subtitulo={`O que merece atenção no estoque em ${fmtData(analise.dataReferencia)}, do mais urgente para o menos urgente.`} />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6" aria-label="Resumo">
+        <Kpi rotulo="Críticos" valor={resumo.criticos} detalhe="agir hoje" tom="critico" />
+        <Kpi rotulo="Atenção" valor={resumo.atencao} detalhe="agir nesta semana" tom="atencao" />
+        <Kpi rotulo="Monitorar" valor={resumo.monitorar} detalhe="acompanhar" tom="monitorar" />
+        <Kpi rotulo="Produtos OK" valor={`${resumo.produtosOk}/${resumo.totalProdutos}`} detalhe="sem alerta relevante" tom="ok" />
+        <Kpi rotulo="Valor em estoque" valor={fmtR$(resumo.valorTotalEstoque)} detalhe="pelo preço de compra" />
+        <Kpi rotulo="Valor em risco" valor={fmtR$(resumo.valorEmRisco)} detalhe="vencimento, excesso, parado" />
+      </section>
+
+      {urgentes.length > 0 && (
+        <section className="mt-5 rounded-xl border border-critico/30 bg-critico-soft p-4">
+          <h2 className="text-sm font-bold text-critico">Resumo para o gestor</h2>
+          <p className="mt-1 text-sm">
+            {urgentes.length === 1 ? "Há 1 situação" : `Há ${urgentes.length} situações`} que exigem ação imediata:{" "}
+            {urgentes
+              .slice(0, 4)
+              .map((a) => `${a.produto} (${a.titulo.toLowerCase()})`)
+              .join("; ")}
+            {urgentes.length > 4 ? " e outras." : "."}
+          </p>
+        </section>
+      )}
+
+      <section className="mt-6" aria-label="Alertas">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="flex rounded-lg border border-border bg-surface p-1" role="tablist">
+            {(["todos", "critico", "atencao", "monitorar"] as const).map((n) => {
+              const qtd = n === "todos" ? alertas.length : alertas.filter((a) => a.nivel === n).length;
+              return (
+                <button
+                  key={n}
+                  role="tab"
+                  aria-selected={nivel === n}
+                  onClick={() => setNivel(n)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium ${nivel === n ? "bg-brand text-white" : "hover:bg-surface-2"}`}
+                >
+                  {n === "todos" ? "Todos" : NIVEL[n].rotulo} ({qtd})
+                </button>
+              );
+            })}
+          </div>
+          <select className={`${campo} w-auto`} value={detector} onChange={(e) => setDetector(e.target.value as DetectorId | "")} aria-label="Tipo de alerta">
+            <option value="">Todos os tipos</option>
+            {Object.entries(DETECTOR).map(([k, v]) => (
+              <option key={k} value={k}>
+                {v}
+              </option>
+            ))}
+          </select>
+          <select className={`${campo} w-auto`} value={categoria} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoria">
+            <option value="">Todas as categorias</option>
+            {categorias.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+          <input className={`${campo} w-48`} placeholder="Buscar produto…" value={busca} onChange={(e) => setBusca(e.target.value)} aria-label="Buscar produto" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <div className="grid gap-3 lg:grid-cols-2">
+          {filtrados.map((a) => (
+            <AlertaCard key={a.id} a={a} />
+          ))}
+        </div>
+        {!filtrados.length && <p className="rounded-xl bg-ok-soft p-6 text-center text-ok">Nenhum alerta com esses filtros. 🌱</p>}
+      </section>
+    </>
   );
 }
