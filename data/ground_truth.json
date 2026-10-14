@@ -1,0 +1,231 @@
+{
+  "aviso": "DADOS SIMULADOS — gabarito das anomalias plantadas",
+  "dataReferencia": "2026-10-10",
+  "gabarito": [
+    {
+      "detector": "consumo_crescente",
+      "produtos": [
+        "oleo diesel s10"
+      ],
+      "descricao": "Consumo de diesel cresce ~150% em 4 meses"
+    },
+    {
+      "detector": "estoque_critico",
+      "produtos": [
+        "oleo diesel s10"
+      ],
+      "descricao": "Diesel abaixo do mínimo, dura ~8 dias"
+    },
+    {
+      "detector": "estoque_critico",
+      "produtos": [
+        "ureia"
+      ],
+      "descricao": "Ureia com saldo para ~5 dias"
+    },
+    {
+      "detector": "ruptura_prevista",
+      "produtos": [
+        "graxa"
+      ],
+      "descricao": "Graxa atinge o mínimo em ~9 dias"
+    },
+    {
+      "detector": "retirada_anomala",
+      "produtos": [
+        "herbicida glifosato"
+      ],
+      "descricao": "Retirada de ~240 L (8x o normal) no Talhão 7"
+    },
+    {
+      "detector": "risco_vencimento",
+      "produtos": [
+        "inoculante para soja"
+      ],
+      "descricao": "45 L de inoculante vencem em 20 dias"
+    },
+    {
+      "detector": "risco_vencimento",
+      "produtos": [
+        "fungicida azoxistrobina"
+      ],
+      "descricao": "Lote de fungicida vence em 75 dias com sobra"
+    },
+    {
+      "detector": "risco_vencimento",
+      "produtos": [
+        "trichoderma"
+      ],
+      "descricao": "Lote de Trichoderma vencido em estoque"
+    },
+    {
+      "detector": "excesso_estoque",
+      "produtos": [
+        "calcario dolomitico"
+      ],
+      "descricao": "Calcário com cobertura de ~1 ano"
+    },
+    {
+      "detector": "cadastro_duplicado",
+      "produtos": [
+        "cloreto de potassio kcl",
+        "kcl"
+      ],
+      "descricao": "KCl lançado também como 'KCl'"
+    },
+    {
+      "detector": "cadastro_duplicado",
+      "produtos": [
+        "oleo hidraulico",
+        "oleo hidraulico 68"
+      ],
+      "descricao": "Óleo hidráulico com dois cadastros"
+    },
+    {
+      "detector": "cadastro_duplicado",
+      "produtos": [
+        "sulfato de amonio"
+      ],
+      "descricao": "Sulfato de amônio escrito de 3 formas"
+    },
+    {
+      "detector": "variacao_preco",
+      "produtos": [
+        "map"
+      ],
+      "descricao": "Compra de MAP 40% acima da mediana"
+    },
+    {
+      "detector": "alto_valor_parado",
+      "produtos": [
+        "semente de milho hibrido"
+      ],
+      "descricao": "60 sacos de milho híbrido sem uso há 150 dias"
+    },
+    {
+      "detector": "qualidade_dados",
+      "produtos": [
+        "adubo foliar"
+      ],
+      "descricao": "Adubo foliar lançado em L e em kg"
+    },
+    {
+      "detector": "qualidade_dados",
+      "produtos": [
+        "oleo de motor 15w40"
+      ],
+      "descricao": "Saídas de óleo de motor maiores que as entradas"
+    },
+    {
+      "detector": "qualidade_dados",
+      "produtos": [
+        "bico de pulverizacao"
+      ],
+      "descricao": "Entrada de bicos sem preço"
+    }
+  ],
+  "aceitaveis": [
+    {
+      "detector": "ruptura_prevista",
+      "produtos": [
+        "oleo diesel s10"
+      ]
+    },
+    {
+      "detector": "ruptura_prevista",
+      "produtos": [
+        "herbicida glifosato"
+      ]
+    },
+    {
+      "detector": "estoque_critico",
+      "produtos": [
+        "herbicida glifosato"
+      ]
+    },
+    {
+      "detector": "excesso_estoque",
+      "produtos": [
+        "inoculante para soja"
+      ]
+    },
+    {
+      "detector": "excesso_estoque",
+      "produtos": [
+        "fungicida azoxistrobina"
+      ]
+    },
+    {
+      "detector": "alto_valor_parado",
+      "produtos": [
+        "fungicida azoxistrobina"
+      ]
+    },
+    {
+      "detector": "excesso_estoque",
+      "produtos": [
+        "trichoderma"
+      ]
+    },
+    {
+      "detector": "alto_valor_parado",
+      "produtos": [
+        "calcario dolomitico"
+      ]
+    },
+    {
+      "detector": "ruptura_prevista",
+      "produtos": [
+        "kcl"
+      ]
+    },
+    {
+      "detector": "estoque_critico",
+      "produtos": [
+        "kcl"
+      ]
+    },
+    {
+      "detector": "excesso_estoque",
+      "produtos": [
+        "map"
+      ]
+    },
+    {
+      "detector": "risco_vencimento",
+      "produtos": [
+        "semente de milho hibrido"
+      ]
+    },
+    {
+      "detector": "estoque_critico",
+      "produtos": [
+        "oleo de motor 15w40"
+      ]
+    },
+    {
+      "detector": "ruptura_prevista",
+      "produtos": [
+        "oleo de motor 15w40"
+      ]
+    },
+    {
+      "detector": "consumo_crescente",
+      "produtos": [
+        "oleo de motor 15w40"
+      ]
+    },
+    {
+      "detector": "retirada_anomala",
+      "produtos": [
+        "oleo de motor 15w40"
+      ]
+    },
+    {
+      "detector": "cadastro_duplicado",
+      "produtos": [
+        "ureia"
+      ]
+    }
+  ]
+}
