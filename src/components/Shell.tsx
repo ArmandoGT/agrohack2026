@@ -23,6 +23,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [menu, setMenu] = useState(false);
   const ativo = (h: string) => (h === "/" ? caminho === "/" : caminho.startsWith(h));
 
+  // A apresentação do pitch ocupa a tela inteira, sem menu nem barra de status.
+  if (caminho.startsWith("/pitch")) return <>{children}</>;
+
   return (
     <div className="min-h-screen md:flex">
       <aside className="border-b border-border bg-brand-strong text-white md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:border-b-0">
