@@ -2,6 +2,20 @@
 
 > **Mindset:** a banca não está comprando um sistema pronto, está comprando **uma ideia que resolve uma dor real e que dá para executar**. Cada minuto do pitch serve para responder a uma pergunta dela: *isso importa? funciona? esses caras sabem o que estão fazendo? isso vai longe?*
 
+## Os slides: `/pitch` (dentro do próprio app)
+
+- **Abrir:** `npm run build && npm start` e acessar `http://localhost:3000/pitch`. Funciona sem internet, porque as fontes e as telas são servidas pelo próprio app.
+- **Teclado:**
+  - → ou espaço avança;
+  - ← volta;
+  - **F** liga a tela cheia;
+  - **N** mostra as notas do apresentador, com fala e tempo de cada slide.
+- **Conteúdo:**
+  - 15 slides animados com a biblioteca Motion;
+  - as telas são **capturas reais do sistema** (base simulada), em `public/pitch/`;
+  - nos 4 momentos da demo, a tela dá zoom e destaca o ponto que está sendo falado.
+- **Base oficial:** quando ela sair, refazer as capturas com ela e trocar os números dos slides 6 a 9.
+
 ## A frase que a banca tem de levar para casa
 
 **"A AgroSentinela é o agrônomo de bolso do estoque: ela lê a planilha que a fazenda já tem e diz o que fazer hoje, por quê e quanto dá para confiar."**
