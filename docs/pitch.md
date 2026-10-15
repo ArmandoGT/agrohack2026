@@ -1,50 +1,123 @@
-# Pitch: 5 minutos (29/10/2026, SNCT)
+# Pitch de venda: 5 minutos (29/10/2026, SNCT)
 
-**Quem fala:**
+> **Mindset:** a banca não está comprando um sistema pronto, está comprando **uma ideia que resolve uma dor real e que dá para executar**. Cada minuto do pitch serve para responder a uma pergunta dela: *isso importa? funciona? esses caras sabem o que estão fazendo? isso vai longe?*
 
-| Parte | Quem |
-|---|---|
-| Abertura e problema | Armando |
-| Demo | Leandro (no teclado) com Armando narrando |
-| Critérios e validação | Pedro |
-| Fechamento | Armando |
+## A frase que a banca tem de levar para casa
 
-Ensaiar 3 vezes com cronômetro, no dia 28/10.
+**"A AgroSentinela é o agrônomo de bolso do estoque: ela lê a planilha que a fazenda já tem e diz o que fazer hoje, por quê e quanto dá para confiar."**
 
-| Tempo | Bloco | Fala (resumo) | Na tela |
+Todos os três devem saber dizer essa frase de cor. Ela abre e fecha o pitch.
+
+## Estrutura (5 min)
+
+| Tempo | Bloco | Quem | Objetivo na cabeça da banca |
 |---|---|---|---|
-| 0:00–0:30 | **Dor** | "O Seu João sabe quanto tem de cada insumo. O que ele não sabe é **o que vai dar problema**. Diesel acabando no meio do plantio, inoculante vencendo no galpão, R$ 57 mil de semente parados." | Painel do dia |
-| 0:30–1:00 | **Solução** | "A AgroSentinela lê os mesmos registros de entrada e saída e responde às 7 perguntas do desafio. Cada alerta diz o quê, por quê, o que fazer e quanto dá para confiar." | Um card aberto em "Como calculamos?" |
-| 1:00–3:30 | **Demo ao vivo** | Ver o roteiro abaixo | App |
-| 3:30–4:15 | **Critérios e validação** | "Criamos uma base simulada com 17 problemas escondidos e um gabarito. A cada mudança, medimos quantos o sistema encontra: 100% de recall. Em 10 bases diferentes, a precisão média foi de 98,9%. Os erros que o loop pegou mudaram o código." Depois, mostrar os limites. | Como funciona → DAG + `docs/eval-report.md` |
-| 4:15–5:00 | **Fechamento** | "Não é mais um cadastro de estoque: é uma lista do que fazer hoje, com justificativa. Funciona com a planilha que a fazenda já tem." Validação com Agronomia e próximos passos (notificação por WhatsApp, sazonalidade por safra). | Painel |
+| 0:00–0:40 | 1. Dor | Armando | "Isso importa." |
+| 0:40–1:10 | 2. Virada | Armando | "Que ideia diferente." |
+| 1:10–3:00 | 3. Demo curta e segura | Leandro (teclado) + Armando (narra) | "Funciona de verdade." |
+| 3:00–3:45 | 4. Por que confiar | Pedro | "Esses caras têm método." |
+| 3:45–4:30 | 5. Visão | Armando | "Isso vai longe." |
+| 4:30–5:00 | 6. Fechamento | Armando | "Esse é o projeto que ganha." |
 
-## Roteiro da demo (2 min 30 s)
+---
 
-1. **Painel do dia:** "6 críticos." Ler o do diesel: "dura ~9 dias". Clicar em *Como calculamos?* e mostrar o critério e a confiança alta.
-2. **Ficha do diesel:** gráfico do saldo com a projeção tracejada cruzando o mínimo, e consumo semanal subindo. "O consumo subiu 87% em 4 meses. Uma média anual enganaria."
-3. **Vencimento:** card do inoculante. "28 L vencem em 20 dias e o ritmo só usa 11. Sobram R$ 933 que viram lixo, a não ser que ele use este lote primeiro."
-4. **Cadastros duplicados:** "KCl" e "Cloreto de potássio". Clicar em *Unificar*. O aviso mostra **Resolvido: KCl · Vai faltar em breve**. "Era um alarme falso causado por cadastro errado."
-5. **Registrar:** retirada de **300 L de glifosato no Talhão 2**. Salvar. O aviso mostra o alerta **Novo**. "A cada registro, tudo é reanalisado."
-6. **Financeiro:** curva ABC. "11 itens concentram 80% do dinheiro."
+### 1. Dor (0:00–0:40): contar uma história, não um problema
 
-> **Plano B:** se a internet ou o deploy falharem, use `npm run build && npm start` no notebook (funciona offline com a base simulada) ou o vídeo gravado.
->
-> Antes de subir ao palco: abrir o app, clicar em *Importar dados → Recarregar base simulada* (ou carregar a base oficial) e fechar os avisos.
+> "Imaginem o Seu João, gerente de uma fazenda aqui em Rondônia. Ele sabe quanto tem de cada insumo, porque está tudo anotado na planilha. O que a planilha **não** conta para ele é **o que vai dar problema**.
+> O diesel que acaba no meio do plantio, com a máquina parada. O inoculante que vence no galpão porque ninguém viu a data. O mesmo adubo cadastrado com dois nomes, e a fazenda compra de novo o que já tinha.
+> Nenhum desses problemas é falta de dado. **É falta de alguém olhando os dados por ele.**"
+
+*Na tela: o Painel do dia, ainda sem explicar nada.*
+
+### 2. Virada (0:40–1:10): a ideia em uma frase
+
+> "A AgroSentinela é esse alguém. Ela lê os mesmos registros de entrada e saída que a fazenda já tem e entrega **uma lista do que fazer hoje**, em ordem de prioridade.
+> E todo alerta responde três perguntas: **o quê**, **por quê** e **quanto dá para confiar**. Não é mais um cadastro de estoque com gráfico bonito. É apoio à decisão, que é exatamente o que o desafio pediu."
+
+*Na tela: abrir um card e mostrar as três partes (mensagem, "Como calculamos?", confiança).*
+
+### 3. Demo curta e segura (1:10–3:00): 4 momentos "uau"
+
+Mostrem só passos que já foram ensaiados e que **não podem dar errado**. Cada passo tem uma frase de efeito.
+
+| # | Tela | O que fazer | Frase de efeito |
+|---|---|---|---|
+| 1 | Painel → card do **diesel** | Abrir *Como calculamos?* | "Mantendo o consumo dos últimos 30 dias, o diesel dura **cerca de 9 dias**. Com o prazo de compra de 15, **ele já está atrasado**. E o sistema mostra a conta e a confiança." |
+| 2 | Ficha do diesel | Mostrar o gráfico com a projeção | "O consumo subiu **87% em 4 meses**. Quem olhasse a média do ano acharia que está tudo bem." |
+| 3 | Cadastros | Unificar **"KCl"** com **"Cloreto de potássio"** | "Era o mesmo adubo com dois nomes. Um clique, e o alarme falso de 'vai faltar' **some sozinho**." |
+| 4 | Registrar | Retirada de **300 L de glifosato** no Talhão 2 | "Alguém tirou 300 litros de uma vez. Na hora o sistema refaz tudo e avisa: **retirada fora do padrão**. É o tipo de coisa que hoje só se descobre no fim do mês." |
+| (opcional, 15 s) | Financeiro | Curva ABC | "E **11 itens concentram 80%** do dinheiro parado no galpão. É ali que o Seu João tem de olhar primeiro." |
+
+**Regras de segurança da demo:**
+- **Não** abrir pelo alerta do óleo de motor (o saldo dele está negativo de propósito, por um problema de dados).
+- **Não** citar o valor em R$ da sobra do card de vencimento enquanto o cálculo com vários lotes não for corrigido.
+- **Não** dizer contagens ("6 críticos"); elas mudam com a base.
+- Se a base oficial já tiver saído e sido **ensaiada**, trocar os números pelos dela. Se não, dizer na primeira frase: *"Para a demonstração, usamos uma base simulada, identificada na tela."*
+- Se algo travar: "Vamos para o vídeo, que mostra exatamente este passo." Troca em até 10 segundos.
+
+### 4. Por que confiar (3:00–3:45): método, sem esconder nada
+
+> "Como a gente sabe que isso funciona? Montamos uma base com **17 problemas escondidos de propósito** e um gabarito. O sistema encontrou **os 17**. Repetimos com 10 bases diferentes para não 'decorar' uma só.
+> Agora, honestidade: fomos nós que criamos essa base, então isso prova que cada regra faz o que diz, não que acerta tudo no mundo real. Por isso [validamos com X, de Agronomia, que nos fez mudar Y] e [rodamos a base oficial do desafio].
+> E cada alerta é uma regra que sabemos explicar: média de consumo, mediana para achar retirada estranha, prazo de validade por lote. Usamos IA para **construir** o sistema, e isso está declarado. O sistema em si não depende de IA para decidir."
+
+*Na tela: Como funciona → grafo do pipeline (os detectores rodando em paralelo).*
+
+> Só digam a frase entre colchetes se ela for verdade no dia. Senão, cortem.
+
+### 5. Visão (3:45–4:30): vender o roadmap como próximo passo óbvio
+
+> "Isso aqui é a primeira versão. O caminho já está mapeado:
+> - **Lista de compras pronta**, que o Seu João manda pelo WhatsApp para o fornecedor;
+> - **'Use primeiro'**: quais lotes usar antes para nada vencer no galpão;
+> - **Calendário de safra**: semente parada em outubro pode ser estoque para a safrinha, e o sistema vai saber a diferença;
+> - **Funciona offline**, porque fazenda nem sempre tem internet;
+> - E depois, **cooperativas**: uma cooperativa com 50 fazendas vê, num painel só, onde está faltando e onde está sobrando."
+
+*Na tela: um slide simples com os 5 próximos passos (ou o Painel do dia).*
+
+### 6. Fechamento (4:30–5:00)
+
+> "Toda fazenda já tem os dados. O que falta é alguém olhando por ela todo dia.
+> **A AgroSentinela é o agrônomo de bolso do estoque: lê a planilha que a fazenda já tem e diz o que fazer hoje, por quê e quanto dá para confiar.**
+> Somos a equipe 3 Hacketeers. O código, a documentação e os testes estão no repositório. Obrigado!"
+
+*Na tela: QR Code do repositório e do link online.*
+
+---
+
+## Técnicas de venda para o palco
+
+- **Comecem pela história, não pela tecnologia.** Ninguém se importa com DAG antes de se importar com o Seu João.
+- **Um número por momento.** "9 dias", "87%", "300 litros", "17 de 17". Números concretos grudam; listas não.
+- **Mostrem, não descrevam.** Toda frase da demo acontece na tela ao mesmo tempo.
+- **Admitam o limite antes da banca perguntar.** Isso tira a arma da mão dela e passa confiança.
+- **Fraqueza vira roadmap.** "Ainda não faz X" vira "o próximo passo é X, e já sabemos como".
+- **Energia e contato visual.** Quem narra olha para a banca, não para a tela. Quem está no teclado não fala.
+- **Terminem no tempo.** Se dois ensaios passarem de 4:50, cortem um passo da demo; não falem mais rápido.
 
 ## Banco de perguntas da banca
 
-| Pergunta provável | Resposta curta |
+| Pergunta provável | Resposta curta (admitir → mostrar → próximo passo) |
 |---|---|
-| Como vocês estimam quantos dias o estoque dura? | Saldo ÷ consumo médio da janela mais recente com pelo menos 3 retiradas (30, 90 dias ou histórico). A janela e a confiança aparecem no alerta. |
-| E se o histórico for curto? | A estimativa sai com "confiança baixa" e perde prioridade. Não escondemos a incerteza. |
-| Como tratam unidades diferentes? | Convertemos dentro da mesma família (t→kg, mL→L). kg com L não é somado: vira alerta de qualidade dos dados. |
-| E preço ou validade vazios? | Ficam como "não informado", nunca zero. O valor do estoque é marcado como estimado. |
-| Por que não usaram IA ou machine learning para prever? | Uma solução simples e explicável atende ao foco do desafio, e cada alerta precisa de justificativa. Usamos estatística robusta (mediana/MAD, blocos mensais, FEFO). Usamos IA no desenvolvimento, conforme declarado em IA.md. |
-| Como sabem que os alertas estão certos? | Loop de avaliação com gabarito: 100% de recall. Em 10 bases simuladas, 98,9% de precisão. Mais testes unitários no CI, revisão manual na base oficial e feedback de Agronomia. |
-| A base simulada não é viciada? | É, por isso: (1) testamos 10 variações; (2) documentamos isso como limitação; (3) a demonstração principal usa a base oficial. |
-| Como detectam produto cadastrado duas vezes? | Grafo de similaridade de nomes: siglas expandidas, acentos removidos, Jaro-Winkler, e fórmulas diferentes de NPK nunca se unem. O usuário confirma a fusão. |
-| Como priorizam? | Score de 0 a 100: nível + urgência em dias + impacto em R$ − penalidade por baixa confiança. |
-| E a sazonalidade da safra? | É uma limitação declarada. O próximo passo é ter janelas de consumo por safra e um calendário agrícola. |
-| Como a fazenda usaria isso no dia a dia? | Abre o Painel do dia de manhã, resolve os críticos, e registra as saídas pelo celular (a interface é responsiva) ou importa a planilha semanal. |
-| Os dados ficam onde? | No navegador ou no Supabase (Postgres) com RLS. Só a chave pública fica no front e nenhuma credencial vai para o repositório. |
+| Vocês criaram a base e o gabarito. Isso não é circular? | "Em parte, sim, e por isso não usamos esse número como prova de acerto. Ele prova que cada regra faz o que promete. Para o mundo real, [rodamos a base oficial e revisamos à mão os primeiros alertas]." |
+| Como calculam quantos dias o estoque dura? | "Saldo dividido pelo consumo médio da janela mais recente com pelo menos 3 retiradas: 30 dias, 90 dias ou o histórico. A janela e a confiança aparecem no próprio alerta." |
+| E se o histórico for curto? | "O alerta sai com 'confiança baixa' escrito e perde prioridade. A gente não esconde a incerteza." |
+| Qual a diferença para uma planilha com fórmulas? | "A planilha mostra o saldo. A AgroSentinela cruza saldo, ritmo de consumo, validade, preço e cadastro duplicado, e diz **o que fazer primeiro e por quê**. E ela lê a planilha que a fazenda já tem." |
+| Quem escreveu o código? O que a IA fez? | "Usamos o Claude Code para gerar a primeira versão, e isso está declarado no `IA.md`. O nosso trabalho foi a ideia, a direção, a revisão e [as correções e a validação feitas depois]. Escolham qualquer detector, e qualquer um de nós explica a regra." *(Treinar: cada um sabe explicar todos os detectores.)* |
+| Por que não usaram machine learning? | "Com um ano de dados e dezenas de produtos, um modelo complexo teria pouco para aprender e explicaria mal cada alerta. O edital pede justificativa clara. Usamos estatística robusta, que dá para explicar ao Seu João." |
+| Semente parada antes do plantio é problema? | "Nem sempre, e esse é exatamente o próximo passo: o calendário de safra, para separar estoque de safra de estoque encalhado." |
+| Como tratam unidades diferentes e campos vazios? | "Convertemos dentro da mesma família (t para kg, mL para L). kg com L nunca é somado: vira alerta de qualidade. Preço ou validade vazios ficam 'não informados', nunca zero." |
+| Vocês validaram com usuário real? | "[Com X, em Y, que nos fez mudar Z.]" Se não: "Ainda não; o roteiro de perguntas está pronto em `docs/validacao.md`." **Nunca inventem.** |
+| O Seu João tem internet na fazenda? | "A análise roda no próprio navegador depois que a página carrega. A versão totalmente offline é um próximo passo declarado." |
+| Como isso vira negócio? | "Começa grátis para o produtor, como porta de entrada. O valor está nas cooperativas e revendas de insumo: elas ganham visão de onde vai faltar e quando oferecer reposição." |
+
+## Plano B e checklist do dia
+
+- [ ] Ensaiar 3 vezes com cronômetro no dia 28/10; uma pessoa faz o papel da banca.
+- [ ] Notebook com `npm run build && npm start` testado **sem internet**.
+- [ ] Vídeo da demo baixado no notebook (não só no YouTube).
+- [ ] 30 minutos antes: abrir o app, carregar a base (oficial ou simulada) e fechar os avisos.
+- [ ] Conferir na tela os números que serão falados (diesel, 87%, curva ABC).
+- [ ] Slide da visão e QR Code prontos.
+- [ ] Cada integrante sabe dizer a frase-tese de cor.
