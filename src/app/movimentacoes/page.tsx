@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { IconeEntrada, IconeSaida } from "@/components/icones";
 import { btnPrim, btnSec, campo, Card, fmtData, fmtNum, Titulo } from "@/components/ui";
 import { parseNumero } from "@/lib/engine/normalize";
 import type { TipoMov } from "@/lib/engine/types";
 import { useDados } from "@/lib/store";
+
+// Rótulo acima do campo, em fonte legível.
+const rotulo = "grid content-start gap-1 text-base font-semibold";
 
 const vazio = { produto: "", categoria: "", unidade: "", quantidade: "", estoqueMinimo: "", preco: "", lote: "", validade: "", fornecedor: "", destino: "", responsavel: "" };
 
@@ -50,62 +54,65 @@ export default function Movimentacoes() {
 
   return (
     <>
-      <Titulo titulo="Registrar movimentação" subtitulo="Cada registro dispara uma nova análise completa. O aviso no canto mostra quais alertas surgiram, mudaram ou foram resolvidos." />
+      <Titulo titulo="Registrar entrada ou saída" subtitulo="Cada registro dispara uma nova análise completa. O aviso no canto mostra quais alertas surgiram, mudaram ou foram resolvidos." />
       <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
         <Card>
-          <form onSubmit={salvar} className="grid gap-3 sm:grid-cols-2">
-            <div className="sm:col-span-2 flex rounded-lg border border-border p-1" role="radiogroup" aria-label="Tipo">
+          <form onSubmit={salvar} className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:col-span-2" role="radiogroup" aria-label="Tipo">
               {(["saida", "entrada"] as const).map((t) => (
                 <button type="button" key={t} role="radio" aria-checked={tipo === t} onClick={() => setTipo(t)}
-                  className={`flex-1 rounded-md py-2 text-sm font-semibold ${tipo === t ? "bg-brand text-white" : "hover:bg-surface-2"}`}>
+                  className={`flex min-h-14 items-center justify-center gap-2 rounded-lg border-2 px-2 text-base font-semibold ${
+                    tipo === t ? "border-brand bg-brand text-white shadow-[inset_0_0_0_1px_rgb(216_185_101/0.6)]" : "border-border-strong bg-surface text-text hover:bg-surface-2"
+                  }`}>
+                  {t === "saida" ? <IconeSaida className="h-6 w-6" /> : <IconeEntrada className="h-6 w-6" />}
                   {t === "saida" ? "Saída / retirada" : "Entrada / compra"}
                 </button>
               ))}
             </div>
-            <label className="sm:col-span-2 text-sm">
+            <label className={`${rotulo} sm:col-span-2`}>
               Produto
               <input className={`${campo} w-full`} list="produtos" value={f.produto} onChange={(e) => escolherProduto(e.target.value)} placeholder="Comece a digitar…" required />
               <datalist id="produtos">{analise.produtos.map((p) => <option key={p.key} value={p.nome} />)}</datalist>
             </label>
-            <label className="text-sm">Quantidade<input className={`${campo} w-full`} inputMode="decimal" value={f.quantidade} onChange={set("quantidade")} required /></label>
-            <label className="text-sm">Unidade<input className={`${campo} w-full`} value={f.unidade} onChange={set("unidade")} placeholder="kg, L, un, sc, t…" required /></label>
-            <label className="text-sm">Data<input type="date" className={`${campo} w-full`} value={data} onChange={(e) => setData(e.target.value)} required /></label>
-            <label className="text-sm">Categoria<input className={`${campo} w-full`} value={f.categoria} onChange={set("categoria")} /></label>
+            <label className={rotulo}>Quantidade<input className={`${campo} w-full`} inputMode="decimal" value={f.quantidade} onChange={set("quantidade")} required /></label>
+            <label className={rotulo}>Unidade<input className={`${campo} w-full`} value={f.unidade} onChange={set("unidade")} placeholder="kg, L, un, sc, t…" required /></label>
+            <label className={rotulo}>Data<input type="date" className={`${campo} w-full`} value={data} onChange={(e) => setData(e.target.value)} required /></label>
+            <label className={rotulo}>Categoria<input className={`${campo} w-full`} value={f.categoria} onChange={set("categoria")} /></label>
             {tipo === "saida" ? (
               <>
-                <label className="text-sm">Destino (talhão, máquina…)<input className={`${campo} w-full`} value={f.destino} onChange={set("destino")} /></label>
-                <label className="text-sm">Responsável<input className={`${campo} w-full`} value={f.responsavel} onChange={set("responsavel")} /></label>
-                <label className="text-sm">Lote (opcional)<input className={`${campo} w-full`} value={f.lote} onChange={set("lote")} /></label>
+                <label className={rotulo}>Destino (talhão, máquina…)<input className={`${campo} w-full`} value={f.destino} onChange={set("destino")} /></label>
+                <label className={rotulo}>Responsável<input className={`${campo} w-full`} value={f.responsavel} onChange={set("responsavel")} /></label>
+                <label className={rotulo}>Lote (opcional)<input className={`${campo} w-full`} value={f.lote} onChange={set("lote")} /></label>
               </>
             ) : (
               <>
-                <label className="text-sm">Preço unitário (R$)<input className={`${campo} w-full`} inputMode="decimal" value={f.preco} onChange={set("preco")} placeholder="deixe vazio se não souber" /></label>
-                <label className="text-sm">Fornecedor<input className={`${campo} w-full`} value={f.fornecedor} onChange={set("fornecedor")} /></label>
-                <label className="text-sm">Lote<input className={`${campo} w-full`} value={f.lote} onChange={set("lote")} /></label>
-                <label className="text-sm">Validade<input type="date" className={`${campo} w-full`} value={f.validade} onChange={set("validade")} /></label>
-                <label className="text-sm">Estoque mínimo<input className={`${campo} w-full`} inputMode="decimal" value={f.estoqueMinimo} onChange={set("estoqueMinimo")} /></label>
+                <label className={rotulo}>Preço unitário (R$)<input className={`${campo} w-full`} inputMode="decimal" value={f.preco} onChange={set("preco")} placeholder="deixe vazio se não souber" /></label>
+                <label className={rotulo}>Fornecedor<input className={`${campo} w-full`} value={f.fornecedor} onChange={set("fornecedor")} /></label>
+                <label className={rotulo}>Lote<input className={`${campo} w-full`} value={f.lote} onChange={set("lote")} /></label>
+                <label className={rotulo}>Validade<input type="date" className={`${campo} w-full`} value={f.validade} onChange={set("validade")} /></label>
+                <label className={rotulo}>Estoque mínimo<input className={`${campo} w-full`} inputMode="decimal" value={f.estoqueMinimo} onChange={set("estoqueMinimo")} /></label>
               </>
             )}
-            {erro && <p className="sm:col-span-2 text-sm text-critico">{erro}</p>}
-            <div className="sm:col-span-2 flex gap-2">
-              <button className={btnPrim}>Salvar e reanalisar</button>
+            {erro && <p role="alert" className="rounded-md border border-critico/30 bg-critico-soft px-3 py-2 text-base font-semibold text-critico sm:col-span-2">{erro}</p>}
+            <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row">
+              <button className={`${btnPrim} min-h-12 text-lg sm:px-8`}>Salvar e reanalisar</button>
               <button type="button" className={btnSec} onClick={() => setF(vazio)}>Limpar</button>
             </div>
           </form>
         </Card>
         <Card>
-          <h2 className="mb-2 font-semibold">Registrados nesta sessão</h2>
-          {!recentes.length && <p className="text-sm text-muted">Nenhum ainda. Experimente registrar uma retirada grande e veja o alerta aparecer.</p>}
-          <ul className="space-y-2 text-sm">
+          <h2 className="mb-2 text-xl font-semibold">Registrados nesta sessão</h2>
+          {!recentes.length && <p className="text-base text-muted">Nenhum ainda. Experimente registrar uma retirada grande e veja o alerta aparecer.</p>}
+          <ul className="space-y-2 text-base">
             {recentes.map((m) => (
-              <li key={m.id} className="flex items-start justify-between gap-2 border-t border-border pt-2">
+              <li key={m.id} className="flex items-center justify-between gap-2 border-t border-border pt-2">
                 <div>
-                  <div className="font-medium">{m.produto}</div>
-                  <div className="text-xs text-muted">
+                  <div className="font-semibold">{m.produto}</div>
+                  <div className="text-sm text-muted">
                     {m.tipo === "entrada" ? "Entrada" : "Saída"} · {fmtNum(m.quantidade)} {m.unidade} · {fmtData(m.data)}
                   </div>
                 </div>
-                <button onClick={() => remover(m.id)} className="text-xs text-critico hover:underline">Desfazer</button>
+                <button onClick={() => remover(m.id)} className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-critico/40 px-3 text-sm font-semibold text-critico hover:bg-critico-soft">Desfazer</button>
               </li>
             ))}
           </ul>

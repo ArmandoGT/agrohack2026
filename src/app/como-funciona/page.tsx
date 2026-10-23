@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { IconeSeta } from "@/components/icones";
 import { btnSec, campo, Card, Titulo } from "@/components/ui";
 import { CONFIG_PADRAO } from "@/lib/engine/config";
 import type { DagExecucao } from "@/lib/engine/types";
@@ -61,7 +62,7 @@ function Dag({ nos }: { nos: DagExecucao[] }) {
           n.dependeDe.map((d) => {
             const a = pos.get(d)!, b = pos.get(n.id)!;
             const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2;
-            return <path key={d + n.id} d={`M${x1},${y1} C${x1 + GX / 2},${y1} ${x2 - GX / 2},${y2} ${x2},${y2}`} fill="none" stroke="var(--border)" strokeWidth={1.5} />;
+            return <path key={d + n.id} d={`M${x1},${y1} C${x1 + GX / 2},${y1} ${x2 - GX / 2},${y2} ${x2},${y2}`} fill="none" stroke="var(--ouro)" strokeWidth={1.5} />;
           }),
         )}
         {nos.map((n) => {
@@ -69,9 +70,9 @@ function Dag({ nos }: { nos: DagExecucao[] }) {
           const det = nivel.get(n.id) === 3 && n.id !== "grafo_duplicados";
           return (
             <g key={n.id} transform={`translate(${p.x},${p.y})`}>
-              <rect width={W} height={H} rx={8} fill={det ? "var(--brand-soft)" : "var(--surface)"} stroke={det ? "var(--brand)" : "var(--border)"} />
-              <text x={10} y={18} fontSize={12} fontWeight={600} fill="var(--text)">{n.rotulo.length > 24 ? n.rotulo.slice(0, 23) + "…" : n.rotulo}</text>
-              <text x={10} y={35} fontSize={10} fill="var(--muted)">{(n.saida.length > 26 ? n.saida.slice(0, 25) + "…" : n.saida)} · {n.ms.toFixed(1)} ms</text>
+              <rect width={W} height={H} rx={8} fill={det ? "var(--brand-soft)" : "var(--surface)"} stroke={det ? "var(--brand)" : "var(--border-strong)"} />
+              <text x={10} y={18} fontSize={12} fontWeight={600} fill="var(--text)" fontFamily="var(--font-texto)">{n.rotulo.length > 24 ? n.rotulo.slice(0, 23) + "…" : n.rotulo}</text>
+              <text x={10} y={35} fontSize={10.5} fill="var(--muted)" fontFamily="var(--font-texto)">{(n.saida.length > 26 ? n.saida.slice(0, 25) + "…" : n.saida)} · {n.ms.toFixed(1)} ms</text>
             </g>
           );
         })}
@@ -87,29 +88,32 @@ export default function ComoFunciona() {
       <Titulo titulo="Como funciona" subtitulo="Os critérios, o caminho dos dados e os limites da solução, explicados para quem vai decidir." />
 
       <Card>
-        <h2 className="font-semibold">As 7 perguntas do desafio e onde são respondidas</h2>
-        <ol className="mt-2 divide-y divide-border text-sm">
+        <h2 className="text-xl font-semibold md:text-2xl">As 7 perguntas do desafio e onde são respondidas</h2>
+        <ol className="mt-2 divide-y divide-border text-base">
           {PERGUNTAS.map(([q, r, href], i) => (
-            <li key={q} className="flex flex-wrap gap-x-3 py-2">
-              <span className="w-6 font-bold text-brand">{i + 1}.</span>
-              <span className="flex-1 font-medium">{q}</span>
-              <Link href={href} className="text-brand hover:underline">{r} →</Link>
+            <li key={q} className="grid grid-cols-[2rem_1fr] gap-x-3 gap-y-1 py-3 md:grid-cols-[2rem_1fr_auto] md:items-baseline">
+              <span className="font-serif text-2xl leading-none font-semibold text-carmim">{i + 1}</span>
+              <span className="font-semibold">{q}</span>
+              <Link href={href} className="col-start-2 inline-flex items-center gap-1 text-brand underline decoration-ouro/60 underline-offset-4 md:col-start-3">
+                {r}
+                <IconeSeta className="h-4 w-4 shrink-0" />
+              </Link>
             </li>
           ))}
         </ol>
       </Card>
 
       <Card className="mt-5">
-        <h2 className="font-semibold">Pipeline de análise (grafo acíclico)</h2>
-        <p className="mb-3 text-xs text-muted">Cada caixa é uma etapa. Os detectores (em verde) rodam em paralelo sobre os saldos e alimentam o score de prioridade. Tempos reais desta execução.</p>
+        <h2 className="text-xl font-semibold md:text-2xl">Pipeline de análise (grafo acíclico)</h2>
+        <p className="mt-0.5 mb-3 text-sm text-muted">Cada caixa é uma etapa. Os detectores (em verde) rodam em paralelo sobre os saldos e alimentam o score de prioridade. Tempos reais desta execução.</p>
         <Dag nos={analise.dag} />
       </Card>
 
       <Card className="mt-5">
-        <h2 className="font-semibold">Critérios de cada alerta</h2>
-        <dl className="mt-2 divide-y divide-border text-sm">
+        <h2 className="text-xl font-semibold md:text-2xl">Critérios de cada alerta</h2>
+        <dl className="mt-2 divide-y divide-border text-base">
           {CRITERIOS.map(([t, d]) => (
-            <div key={t} className="grid gap-1 py-2 sm:grid-cols-[200px_1fr]">
+            <div key={t} className="grid gap-1 py-3 sm:grid-cols-[210px_1fr]">
               <dt className="font-semibold">{t}</dt>
               <dd className="text-muted">{d}</dd>
             </div>
@@ -119,12 +123,12 @@ export default function ComoFunciona() {
 
       <div className="mt-5 grid gap-5 lg:grid-cols-2">
         <Card>
-          <h2 className="font-semibold">Limites que assumimos</h2>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">{LIMITES.map((l) => <li key={l}>{l}</li>)}</ul>
+          <h2 className="text-xl font-semibold">Limites que assumimos</h2>
+          <ul className="mt-2 list-disc space-y-1.5 pl-5 text-base text-muted marker:text-ouro">{LIMITES.map((l) => <li key={l}>{l}</li>)}</ul>
         </Card>
         <Card>
-          <h2 className="font-semibold">Data de referência (o “hoje” da análise)</h2>
-          <p className="mt-1 text-sm text-muted">Por padrão é a data mais recente dos registros, para analisar bases históricas como se fosse o dia do último lançamento.</p>
+          <h2 className="text-xl font-semibold">Data de referência (o “hoje” da análise)</h2>
+          <p className="mt-1 text-base text-muted">Por padrão é a data mais recente dos registros, para analisar bases históricas como se fosse o dia do último lançamento.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <input type="date" className={`${campo} w-auto`} value={dataReferencia ?? analise.dataReferencia} onChange={(e) => definirDataReferencia(e.target.value || null)} aria-label="Data de referência" />
             <button className={btnSec} onClick={() => definirDataReferencia(null)}>Automática</button>

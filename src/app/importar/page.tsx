@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { btnPrim, btnSec, Card, fmtData, Titulo } from "@/components/ui";
+import { IconeImportar, IconeOk } from "@/components/icones";
+import { btnPrim, btnSec, Card, fmtData, Moldura, Titulo } from "@/components/ui";
 import type { ResultadoImportacao } from "@/lib/engine/normalize";
 import { lerArquivo, paraCsv } from "@/lib/import";
 import { useDados } from "@/lib/store";
@@ -38,18 +39,20 @@ export default function Importar() {
 
   return (
     <>
-      <Titulo titulo="Importar dados" subtitulo="Aceita CSV (separado por ; ou ,) e planilhas Excel. As colunas são reconhecidas pelo nome, mesmo com variações (ex.: “Qtde”, “Insumo”, “Vencimento”)." />
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <Card>
-          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-8 text-center hover:bg-surface-2">
-            <span className="text-base font-semibold">Escolha o arquivo da base</span>
-            <span className="text-sm text-muted">.csv, .xlsx ou .xls</span>
+      <Titulo titulo="Importar planilha" subtitulo="Aceita CSV (separado por ; ou ,) e planilhas Excel. As colunas são reconhecidas pelo nome, mesmo com variações (ex.: “Qtde”, “Insumo”, “Vencimento”)." />
+      <div className="grid items-start gap-4 lg:grid-cols-[1fr_340px]">
+        <Moldura>
+          <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border-strong p-8 text-center hover:bg-surface-2 focus-within:outline-3 focus-within:outline-ultramar">
+            <IconeImportar className="h-10 w-10 text-brand" />
+            <span className="font-serif text-2xl font-semibold">Escolha o arquivo da base</span>
+            <span className="text-base text-muted">.csv, .xlsx ou .xls</span>
+            <span className={`${btnPrim} mt-2`}>Escolher arquivo</span>
             <input type="file" accept=".csv,.xlsx,.xls,text/csv" className="sr-only" onChange={(e) => ler(e.target.files?.[0])} />
           </label>
-          {lendo && <p className="mt-3 text-sm text-muted">Lendo…</p>}
+          {lendo && <p className="mt-3 text-base text-muted">Lendo…</p>}
           {res && (
             <div className="mt-4 space-y-3">
-              <p className="text-sm">
+              <p className="text-base">
                 <strong>{res.nome}</strong>: {res.movimentacoes.length} registros válidos
                 {res.rejeitadas.length > 0 && <span className="text-critico">, {res.rejeitadas.length} rejeitados</span>}.
                 {res.movimentacoes.length > 0 && (
@@ -57,21 +60,21 @@ export default function Importar() {
                 )}
               </p>
               <div>
-                <h3 className="text-sm font-semibold">Colunas reconhecidas</h3>
-                <ul className="mt-1 grid gap-1 text-xs sm:grid-cols-2">
+                <h3 className="text-base font-semibold">Colunas reconhecidas</h3>
+                <ul className="mt-1 grid gap-1 text-sm sm:grid-cols-2">
                   {CAMPOS.map(([k, rotulo]) => {
                     const col = res.mapa[k as keyof typeof res.mapa];
                     return (
-                      <li key={k} className={col ? "" : "text-muted"}>
-                        {col ? "✔" : "—"} {rotulo}: {col ? <code className="rounded bg-surface-2 px-1">{col}</code> : "não encontrada"}
+                      <li key={k} className={`flex items-baseline gap-1.5 ${col ? "" : "text-muted"}`}>
+                        {col ? <IconeOk className="h-4 w-4 shrink-0 self-center text-ok" /> : <span aria-hidden>—</span>} {rotulo}: {col ? <code className="rounded bg-surface-2 px-1">{col}</code> : "não encontrada"}
                       </li>
                     );
                   })}
                 </ul>
               </div>
               {res.rejeitadas.length > 0 && (
-                <details className="text-xs">
-                  <summary className="cursor-pointer text-critico">Ver linhas rejeitadas</summary>
+                <details className="text-sm">
+                  <summary className="cursor-pointer py-2 font-semibold text-critico">Ver linhas rejeitadas</summary>
                   <ul className="mt-1 max-h-40 overflow-auto">
                     {res.rejeitadas.slice(0, 200).map((r) => <li key={r.linha}>Linha {r.linha}: {r.motivo}</li>)}
                   </ul>
@@ -90,17 +93,22 @@ export default function Importar() {
               </button>
             </div>
           )}
-          {ok && <p className="mt-3 rounded-lg bg-ok-soft p-3 text-sm text-ok">{ok}</p>}
-        </Card>
+          {ok && (
+            <p role="status" className="mt-3 flex items-center gap-2 rounded-lg border border-ok/30 bg-ok-soft p-3 text-base font-semibold text-ok">
+              <IconeOk className="h-5 w-5 shrink-0" />
+              {ok}
+            </p>
+          )}
+        </Moldura>
         <Card>
-          <h2 className="font-semibold">Base atual</h2>
-          <p className="mt-1 text-sm text-muted">{movimentacoes.length} registros · origem: {origem}</p>
+          <h2 className="text-xl font-semibold">Base atual</h2>
+          <p className="mt-1 text-base text-muted">{movimentacoes.length} registros · origem: {origem}</p>
           <div className="mt-3 flex flex-col gap-2">
             <button className={btnSec} onClick={() => carregarSimulado()}>Recarregar base simulada</button>
             <button className={btnSec} onClick={() => baixar(paraCsv(movimentacoes), "agrosentinela-registros.csv")}>Exportar registros atuais (CSV)</button>
             <button className={btnSec} onClick={() => baixar(paraCsv([]), "modelo-importacao.csv")}>Baixar modelo vazio</button>
           </div>
-          <p className="mt-4 text-xs text-muted">
+          <p className="mt-4 text-sm text-muted">
             Regras: campos vazios ficam como “não informado” (nunca zero); unidades diferentes do mesmo produto são convertidas quando possível
             (t→kg, mL→L) e, se forem incompatíveis (kg × L), ficam fora das contas e geram um alerta.
           </p>
