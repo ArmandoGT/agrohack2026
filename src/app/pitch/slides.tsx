@@ -192,148 +192,96 @@ function Arco({ largura, alturaArco = 96, atraso = 0.2, tema = "noite", rotulo, 
   );
 }
 
-/** Tela real do sistema dentro do arco. A `Camera` parte exatamente desta imagem (fonteRef). */
-function Tela({ src, alt, fonteRef, largura = 1150, atraso = 0.2 }: { src: string; alt: string; fonteRef: RefObject<HTMLDivElement | null>; largura?: number; atraso?: number }) {
-  return (
-    <Arco largura={largura} atraso={atraso} rotulo="agrosentinela · tela real do sistema">
-      <div ref={fonteRef} style={{ position: "relative", overflow: "hidden", aspectRatio: "16 / 10" }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt} draggable={false} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-      </div>
-    </Arco>
-  );
-}
-
-// ---------- câmera ----------
-// Movimento de câmera no estilo dos vídeos do HyperFrames: a tela real sai do arco, ocupa o slide
-// inteiro e a câmera passeia pelos pontos falados, com zoom suficiente para ler do fundo do auditório
-// (texto do app de 14–16 px vira ≥ 32 px no slide). Depois volta para o arco.
-// → (ou o passador) avança a câmera antes de passar o slide, como as animações do PowerPoint.
+// ---------- tela real com zoom ----------
+// O print fica dentro do arco, no lugar de sempre, e vai se aprofundando dentro do próprio quadro:
+// cada → (ou o passador) aproxima o próximo ponto falado; depois da última parada, → passa o slide.
+// ↑ volta uma parada. Nada avança sozinho: o ritmo é o da fala.
 
 type Focos = Record<string, { tam: number[]; focos: Record<string, Foco> }>;
 const TELAS = FOCOS as Focos;
 
-/** Controle que a Apresentacao usa para avançar/voltar a câmera do slide atual pelo teclado. */
+/** Controle que a Apresentacao usa para avançar/voltar o zoom do slide atual pelo teclado. */
 export type ControleCamera = { avancar: () => boolean; voltar: () => boolean };
 export const CameraCtx = createContext<RefObject<ControleCamera | null> | null>(null);
 
-type Parada = { tela: string; foco: string; legenda: ReactNode; dura?: number };
+/** Ponto a aproximar (nome em focos.json); `tela` troca a imagem nessa parada. */
+type Parada = { foco: string; tela?: string };
 
-const BARRA = 176; // faixa de legenda no rodapé
-const AREA = 1080 - BARRA;
-const ZOOM_MAX = 2.6; // as capturas são 2×: até ~2,6× ainda fica nítido no projetor
+const ZOOM_MAX = 3; // as capturas são 2×: até 3× ainda fica nítido no projetor
 
-/** Escala e deslocamento (px do slide) que enquadram o foco na área acima da faixa de legenda. */
-function enquadrar(tam: number[], f: Foco) {
-  const s = Math.min((0.92 * 1920) / f.w, (0.84 * AREA) / f.h, ZOOM_MAX);
-  const limita = (v: number, total: number, janela: number) => (total * s >= janela ? Math.min(0, Math.max(janela - total * s, v)) : (janela - total * s) / 2);
-  const x = limita(960 - (f.x + f.w / 2) * s, tam[0], 1920);
-  const y = limita(AREA / 2 - (f.y + f.h / 2) * s, tam[1], AREA);
-  return { s, x, y };
-}
-
-function Camera({ fonteRef, paradas, rotulo, titulo, inicio = 3.2 }: {
-  fonteRef: RefObject<HTMLElement | null>; paradas: Parada[]; rotulo: string; titulo: ReactNode; inicio?: number;
+function Tela({ tela, alt, paradas = [], largura = 1150, atraso = 0.2, alturaArco, rotulo = "agrosentinela · tela real do sistema" }: {
+  tela: string; alt: string; paradas?: Parada[]; largura?: number; atraso?: number; alturaArco?: number; rotulo?: string;
 }) {
   const reduz = useReduz();
   const controle = useContext(CameraCtx);
-  const raizRef = useRef<HTMLDivElement>(null);
   const n = paradas.length;
-  // -1: tela no arco · 0..n-1: paradas · n: voltou ao arco (fim)
-  const [fase, setFase] = useState(-1);
+  const [fase, setFase] = useState(-1); // -1: print inteiro · 0..n-1: paradas
   const faseRef = useRef(fase);
-  faseRef.current = fase;
-  const [origem, setOrigem] = useState<{ x: number; y: number; w: number } | null>(null);
-  const [chegouEm, setChegouEm] = useState(-2); // parada em que a câmera já pousou (o filete só aparece aí)
-
-  // Avança sozinha no ritmo da fala; → e ↓ adiantam, ↑ volta.
-  useEffect(() => {
-    if (fase >= n) return;
-    const t = setTimeout(() => setFase((f) => Math.min(n, f + 1)), (fase < 0 ? inicio : paradas[fase].dura ?? 3.6) * 1000);
-    return () => clearTimeout(t);
-  }, [fase, n, inicio, paradas]);
+  useEffect(() => { faseRef.current = fase; }, [fase]);
+  const [chegouEm, setChegouEm] = useState(-2); // parada em que o zoom já pousou (o filete só aparece aí)
 
   useEffect(() => {
-    if (!controle) return;
-    controle.current = {
-      avancar: () => (faseRef.current < n ? (setFase(faseRef.current + 1), true) : false),
-      voltar: () => (faseRef.current > -1 ? (setFase(faseRef.current - 1), true) : false),
+    if (!controle || n === 0) return;
+    const meu: ControleCamera = {
+      avancar: () => (faseRef.current < n - 1 ? (setFase(++faseRef.current), true) : false),
+      voltar: () => (faseRef.current > -1 ? (setFase(--faseRef.current), true) : false),
     };
-    return () => { controle.current = null; };
+    controle.current = meu;
+    return () => { if (controle.current === meu) controle.current = null; };
   }, [controle, n]);
 
-  // Onde está a imagem do arco, em px do slide (o palco inteiro está escalado pela Apresentacao).
-  useEffect(() => {
-    if (fase !== 0 || !raizRef.current || !fonteRef.current) return;
-    const raiz = raizRef.current.getBoundingClientRect();
-    const k = raiz.width / 1920;
-    const r = fonteRef.current.getBoundingClientRect();
-    setOrigem({ x: (r.left - raiz.left) / k, y: (r.top - raiz.top) / k, w: r.width / k });
-  }, [fase, fonteRef]);
+  const tam = TELAS[tela].tam;
+  const W = largura - 6, H = (W * tam[1]) / tam[0]; // quadro dentro das bordas do arco
+  const base = W / tam[0];
+  const parada = fase >= 0 ? paradas[fase] : null;
+  const atual = parada?.tela ?? (fase >= 0 ? [...paradas.slice(0, fase + 1)].reverse().find((p) => p.tela)?.tela : undefined) ?? tela;
+  const foco = parada ? TELAS[atual].focos[parada.foco] : null;
 
-  const aberta = fase >= 0 && fase < n;
-  const atual = paradas[Math.max(0, Math.min(n - 1, fase))];
-  const tam = TELAS[atual.tela].tam;
-  const foco = TELAS[atual.tela].focos[atual.foco];
-  const noArco = origem ? { s: origem.w / TELAS[paradas[0].tela].tam[0], x: origem.x, y: origem.y } : { s: 1, x: 0, y: 0 };
-  const alvo = aberta ? enquadrar(tam, foco) : noArco;
-  const r = { x: foco.x * alvo.s + alvo.x, y: foco.y * alvo.s + alvo.y, w: foco.w * alvo.s, h: foco.h * alvo.s };
+  // Zoom que enquadra o foco no quadro, sem deixar a imagem sair da moldura.
+  let s = base, x = 0, y = 0;
+  if (foco) {
+    s = base * Math.min((0.97 * tam[0]) / foco.w, (0.88 * tam[1]) / foco.h, ZOOM_MAX);
+    const limita = (v: number, total: number, janela: number) => Math.min(0, Math.max(janela - total * s, v));
+    x = limita(W / 2 - (foco.x + foco.w / 2) * s, tam[0], W);
+    y = limita(H / 2 - (foco.y + foco.h / 2) * s, tam[1], H);
+  }
+  const r = foco && { x: foco.x * s + x, y: foco.y * s + y, w: foco.w * s, h: foco.h * s };
   const traco = useTraco(0.05, 0.7);
-  const telas = [...new Set(paradas.map((p) => p.tela))];
+  const telas = [tela, ...paradas.map((p) => p.tela).filter((t): t is string => !!t && t !== tela)];
 
   return (
-    <div ref={raizRef} aria-hidden={!aberta} style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-      {/* fundo de altar que cobre o slide enquanto a câmera está aberta */}
-      <motion.div initial={false} animate={{ opacity: aberta ? 1 : 0 }} transition={{ duration: 0.5, delay: aberta ? 0 : 0.6 }}
-        style={{ position: "absolute", inset: 0, background: `radial-gradient(120% 90% at 50% 40%, ${C.noite2}, ${C.noite} 75%)` }} />
-      {origem && (
-        // Ao voltar, a imagem só some depois de pousar de novo no arco.
-        <motion.div initial={false} animate={{ opacity: aberta ? 1 : 0 }} transition={aberta ? { duration: 0.15 } : { duration: 0.25, delay: 1 }}
-          style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+    <div style={{ position: "relative" }}>
+      <Arco largura={largura} atraso={atraso} alturaArco={alturaArco} rotulo={rotulo}>
+        <div style={{ position: "relative", overflow: "hidden", width: W, height: H }}>
           <motion.div
-            initial={{ x: noArco.x, y: noArco.y, scale: noArco.s }}
-            animate={{ x: alvo.x, y: alvo.y, scale: alvo.s }}
+            initial={false}
+            animate={{ x, y, scale: s }}
             transition={{ duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
             onAnimationComplete={() => setChegouEm(faseRef.current)}
-            style={{ position: "absolute", left: 0, top: 0, width: tam[0], height: tam[1], transformOrigin: "0 0", boxShadow: "0 30px 80px rgba(0,0,0,.5)" }}
+            style={{ position: "absolute", left: 0, top: 0, width: tam[0], height: tam[1], transformOrigin: "0 0" }}
           >
-            {telas.map((t) => (
-              <motion.img key={t} src={`/pitch/${t}.png`} alt="" draggable={false} initial={false} animate={{ opacity: t === atual.tela ? 1 : 0 }} transition={{ duration: 0.5 }}
+            {telas.map((t, k) => (
+              <motion.img key={t} src={`/pitch/${t}.png`} alt={t === atual ? alt : ""} draggable={false} initial={false} animate={{ opacity: t === atual ? 1 : 0 }} transition={{ duration: k === 0 ? 0 : 0.5 }}
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} />
             ))}
           </motion.div>
           <AnimatePresence>
-            {aberta && (chegouEm === fase || reduz) && (
-              <motion.svg key={fase} width={1920} height={AREA} viewBox={`0 0 1920 ${AREA}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.35 }}
-                style={{ position: "absolute", left: 0, top: 0 }}>
-                <path d={`M0 0H1920V${AREA}H0Z M${r.x} ${r.y}h${r.w}v${r.h}h${-r.w}Z`} fillRule="evenodd" fill="rgba(14,21,40,.38)" />
-                <motion.rect x={r.x} y={r.y} width={r.w} height={r.h} rx={10} fill="none" stroke={C.ouro} strokeWidth={5} {...traco} />
+            {r && (chegouEm === fase || reduz) && (
+              <motion.svg key={fase} width={W} height={H} viewBox={`0 0 ${W} ${H}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.35 }}
+                style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }} aria-hidden>
+                <path d={`M0 0H${W}V${H}H0Z M${r.x} ${r.y}h${r.w}v${r.h}h${-r.w}Z`} fillRule="evenodd" fill="rgba(14,21,40,.38)" />
+                <motion.rect x={r.x} y={r.y} width={r.w} height={r.h} rx={8} fill="none" stroke={C.ouro} strokeWidth={4} {...traco} />
               </motion.svg>
             )}
           </AnimatePresence>
-        </motion.div>
-      )}
-      {/* faixa de legenda: o que está sendo mostrado, grande o bastante para o fundo da sala */}
-      <motion.div initial={false} animate={{ y: aberta ? 0 : BARRA + 20, opacity: aberta ? 1 : 0 }} transition={{ duration: 0.6, ease: EASE, delay: aberta && fase === 0 ? 0.5 : 0 }}
-        style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: BARRA, display: "flex", alignItems: "center", gap: 48, padding: "0 128px 0 96px",
-          background: `linear-gradient(180deg, ${C.noite2}, ${C.noite})`, borderTop: `4px double ${C.ouro}`, color: C.marfim }}>
-        <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", gap: 6 }}>
-          <Rotulo>{rotulo}</Rotulo>
-          <div style={{ fontFamily: TITULO, fontSize: 58, fontWeight: 700, lineHeight: 1, color: C.ouro, whiteSpace: "nowrap", ...NUMEROS }}>{titulo}</div>
         </div>
-        <span aria-hidden style={{ width: 2, alignSelf: "stretch", margin: "36px 0", background: "rgba(212,175,90,.45)" }} />
-        <AnimatePresence mode="wait">
-          <motion.p key={Math.max(0, Math.min(n - 1, fase))} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }}
-            style={{ flex: 1, margin: 0, fontSize: 38, lineHeight: 1.3, fontWeight: 600 }}>
-            {atual.legenda}
-          </motion.p>
-        </AnimatePresence>
-        {n > 1 && (
-          <div style={{ display: "flex", gap: 12, flexShrink: 0 }}>
-            {paradas.map((p, k) => <Losango key={p.foco + k} cor={k === fase ? C.ouro : "rgba(212,175,90,.3)"} tam={14} />)}
-          </div>
-        )}
-      </motion.div>
+      </Arco>
+      {/* Paradas do zoom, discretas, para o apresentador saber quantos → faltam */}
+      {n > 0 && (
+        <div aria-hidden style={{ position: "absolute", right: 6, bottom: -30, display: "flex", gap: 10 }}>
+          {paradas.map((p, k) => <Losango key={p.foco + k} cor={k <= fase ? C.ouro : "rgba(212,175,90,.3)"} tam={10} />)}
+        </div>
+      )}
     </div>
   );
 }
@@ -347,10 +295,9 @@ function Rodape({ tema = "noite" }: { tema?: Tema }) {
 }
 
 /** Slide de "momento da demo": número grande à esquerda, tela real à direita. */
-function Momento({ n, numero, titulo, legenda, tela, alt, paradas, tamanho = 170 }: {
-  n: number; numero: ReactNode; titulo: string; legenda: ReactNode; tela: string; alt: string; paradas: Parada[]; tamanho?: number;
+function Momento({ n, numero, legenda, tela, alt, paradas, tamanho = 170 }: {
+  n: number; numero: ReactNode; legenda: ReactNode; tela: string; alt: string; paradas: Parada[]; tamanho?: number;
 }) {
-  const fonte = useRef<HTMLDivElement>(null);
   return (
     <Base>
       <div style={{ position: "absolute", left: 128, top: 128, width: 470, display: "flex", flexDirection: "column", gap: 26 }}>
@@ -362,10 +309,9 @@ function Momento({ n, numero, titulo, legenda, tela, alt, paradas, tamanho = 170
         <Entra atraso={0.6}><p style={{ fontSize: 34, lineHeight: 1.4, color: C.marfim, margin: 0 }}>{legenda}</p></Entra>
       </div>
       <div style={{ position: "absolute", right: 128, top: 140 }}>
-        <Tela src={`/pitch/${tela}.png`} alt={alt} fonteRef={fonte} />
+        <Tela tela={tela} alt={alt} paradas={paradas} />
       </div>
       <Rodape />
-      <Camera fonteRef={fonte} paradas={paradas} rotulo={`Demo · momento ${n} de 4`} titulo={titulo} />
     </Base>
   );
 }
@@ -503,7 +449,6 @@ function Frase() {
 }
 
 function Ideia() {
-  const fonte = useRef<HTMLDivElement>(null);
   const pilares: [string, string][] = [
     ["O quê", "Óleo diesel S10 em estoque crítico."],
     ["Por quê", "No consumo dos últimos 30 dias (220 L/dia), o saldo dura cerca de 9 dias."],
@@ -527,25 +472,14 @@ function Ideia() {
         ))}
       </div>
       <div style={{ position: "absolute", left: 1152, top: 400 }}>
-        <Arco largura={640} alturaArco={74} atraso={0.6}>
-          <div ref={fonte}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/pitch/alerta-diesel-metodo.png" alt="Alerta real do sistema: Óleo diesel S10, estoque crítico, com critério e confiança" style={{ width: "100%", display: "block" }} />
-          </div>
-        </Arco>
+        <Tela tela="alerta-diesel-metodo" alt="Alerta real do sistema: Óleo diesel S10, estoque crítico, com critério e confiança"
+          largura={640} alturaArco={74} atraso={0.6} rotulo="" paradas={[{ foco: "alerta" }, { foco: "fazer" }, { foco: "confianca" }]} />
       </div>
-      <Camera fonteRef={fonte} rotulo="A ideia" titulo="Um alerta real" inicio={5.5}
-        paradas={[
-          { tela: "alerta-diesel-metodo", foco: "alerta", legenda: <><b style={{ color: C.ouroClaro }}>O quê e por quê:</b> diesel em estoque crítico, dura cerca de 9 dias.</>, dura: 4 },
-          { tela: "alerta-diesel-metodo", foco: "fazer", legenda: <><b style={{ color: C.ouroClaro }}>O que fazer:</b> comprar cerca de 8.311 L, com o custo estimado.</>, dura: 3.6 },
-          { tela: "alerta-diesel-metodo", foco: "confianca", legenda: <><b style={{ color: C.ouroClaro }}>Quanto confiar:</b> o critério e os dados por trás da conta, à vista.</>, dura: 4 },
-        ]} />
     </Base>
   );
 }
 
 function Painel() {
-  const fonte = useRef<HTMLDivElement>(null);
   const niveis: [string, string, string][] = [["Crítico", C.cinabreClaro, "agir hoje"], ["Atenção", C.ocreClaro, "agir nesta semana"], ["Monitorar", C.azulClaro, "acompanhar"]];
   return (
     <Base>
@@ -565,46 +499,35 @@ function Painel() {
         </div>
       </div>
       <div style={{ position: "absolute", right: 128, top: 140 }}>
-        <Tela src="/pitch/painel.png" alt="Painel do dia real do sistema" fonteRef={fonte} atraso={0.6} />
+        <Tela tela="painel" alt="Painel do dia real do sistema" paradas={[{ foco: "resumo" }, { foco: "indicadores" }]} />
       </div>
       <Rodape />
-      <Camera fonteRef={fonte} rotulo="O produto" titulo="Painel do dia" inicio={4}
-        paradas={[
-          { tela: "painel", foco: "resumo", legenda: <>Primeiro, o <b style={{ color: C.ouroClaro }}>resumo para o gestor</b>: o que exige ação hoje, em uma frase.</>, dura: 4.2 },
-          { tela: "painel", foco: "niveis", legenda: <>Depois, a contagem por nível: <b style={{ color: C.cinabreClaro }}>6 críticos</b> para agir hoje.</>, dura: 4 },
-        ]} />
     </Base>
   );
 }
 
 const Momento1 = () => (
-  <Momento n={1} numero={<><Contador ate={9} /> dias</>} titulo="9 dias" tela="diesel" alt="Ficha do óleo diesel S10"
+  <Momento n={1} numero={<><Contador ate={9} /> dias</>} tela="diesel" alt="Ficha do óleo diesel S10"
     legenda={<>é quanto o diesel dura no ritmo atual. O prazo de compra é de 15 dias: <b style={{ color: C.ouroClaro }}>já passou da hora de comprar.</b></>}
-    paradas={[
-      { tela: "diesel", foco: "saldo", legenda: <>Saldo de <b style={{ color: C.cinabreClaro }}>1.960 L</b>, abaixo do mínimo de 3.675 L, gastando 220 L por dia.</>, dura: 4 },
-      { tela: "diesel", foco: "duraAte", legenda: <>No ritmo atual, o diesel <b style={{ color: C.ouroClaro }}>acaba em 18/10</b>: cerca de 9 dias.</> },
-    ]} />
+    paradas={[{ foco: "saldo" }, { foco: "duraAte" }]} />
 );
 
 const Momento2 = () => (
-  <Momento n={2} numero={<><Contador ate={87} prefixo="+" sufixo="%" /></>} titulo="+87%" tela="diesel-graficos" alt="Gráfico de consumo semanal do diesel subindo"
+  <Momento n={2} numero={<><Contador ate={87} prefixo="+" sufixo="%" /></>} tela="diesel-graficos" alt="Gráfico de consumo semanal do diesel subindo"
     legenda={<>de consumo de diesel em 4 meses. <b style={{ color: C.ouroClaro }}>Quem olhasse a média do ano acharia que está tudo bem.</b></>}
-    paradas={[{ tela: "diesel-graficos", foco: "consumo", legenda: <>O consumo semanal <b style={{ color: C.ouroClaro }}>vem subindo</b> mês a mês: a média antiga engana.</>, dura: 4.5 }]} />
+    paradas={[{ foco: "consumo" }]} />
 );
 
 const Momento3 = () => (
-  <Momento n={3} numero="1 clique" titulo="1 clique" tamanho={130} tela="cadastros" alt="Sugestão de cadastro duplicado KCl"
+  <Momento n={3} numero="1 clique" tamanho={130} tela="cadastros" alt="Sugestão de cadastro duplicado KCl"
     legenda={<>“KCl” e “Cloreto de potássio” eram o mesmo adubo. Unificou, a análise foi refeita e <b style={{ color: C.ouroClaro }}>o alarme falso sumiu sozinho.</b></>}
-    paradas={[
-      { tela: "cadastros", foco: "kcl", legenda: <>“KCl” e “Cloreto de potássio (KCl)”: <b style={{ color: C.ouroClaro }}>o mesmo adubo com dois nomes</b>.</>, dura: 4 },
-      { tela: "cadastros-unificado", foco: "aviso", legenda: <>Um clique em Unificar: a análise é refeita e <b style={{ color: C.ouroClaro }}>o alarme falso é resolvido</b>.</> },
-    ]} />
+    paradas={[{ foco: "kcl" }, { foco: "aviso", tela: "cadastros-unificado" }]} />
 );
 
 const Momento4 = () => (
-  <Momento n={4} numero={<><Contador ate={170} dur={1.2} /> L</>} titulo="170 L" tela="registrar-novo" alt="Aviso de novo alerta de atenção após registrar retirada"
+  <Momento n={4} numero={<><Contador ate={170} dur={1.2} /> L</>} tela="registrar-novo" alt="Aviso de novo alerta de atenção após registrar retirada"
     legenda={<>de glifosato retirados de uma vez. Salvou, o sistema refez tudo e <b style={{ color: C.ouroClaro }}>avisou na hora: Novo · Atenção · Vai faltar em breve.</b></>}
-    paradas={[{ tela: "registrar-novo", foco: "aviso", legenda: <>Salvou a retirada e o aviso chegou na hora: <b style={{ color: C.ocreClaro }}>Novo · Atenção · Vai faltar em breve</b>.</>, dura: 4.5 }]} />
+    paradas={[{ foco: "aviso" }]} />
 );
 
 function Perguntas() {

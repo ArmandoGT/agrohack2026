@@ -2,8 +2,8 @@
 
 // Motor da apresentação: palco 1920×1080 escalado para a janela, navegação por teclado/clique,
 // transição entre slides (Motion) e notas do apresentador (tecla N).
-// Nos slides com câmera, → (e o passador) primeiro avança a câmera e só depois passa o slide,
-// como as animações do PowerPoint; ↓ e ↑ movem só a câmera.
+// Nos slides com print, → (e o passador) primeiro aproxima o próximo ponto do print e só depois
+// passa o slide, como as animações do PowerPoint; ↓ e ↑ movem só o zoom.
 // Transição curta e sempre igual: o slide sai em 0,22 s e o próximo entra em 0,38 s (0,6 s no total).
 // Com prefers-reduced-motion, o MotionConfig deixa só o fade (sem deslocamento nem escala).
 
@@ -21,6 +21,9 @@ export function Apresentacao() {
   const [escala, setEscala] = useState(1);
   const [notas, setNotas] = useState(false);
   const camera = useRef<ControleCamera | null>(null);
+
+  // O slide que está saindo não recebe mais teclas; o novo registra o próprio zoom ao montar.
+  useEffect(() => { camera.current = null; }, [i]);
 
   useEffect(() => {
     const ajustar = () => setEscala(Math.min(window.innerWidth / W, window.innerHeight / H));
@@ -100,7 +103,7 @@ export function Apresentacao() {
           <div onClick={(e) => e.stopPropagation()} style={{ position: "fixed", left: 16, right: 16, bottom: 16, maxHeight: "38vh", overflow: "auto", background: "rgba(14,21,40,.97)", color: C.marfim, border: `1px solid ${C.ouro}`, borderTop: `4px double ${C.ouro}`, borderRadius: 8, padding: "16px 20px", fontSize: 17, lineHeight: 1.55 }}>
             <div style={{ color: C.ouroClaro, fontWeight: 700, marginBottom: 6 }}>Notas · {slide.titulo} · {slide.tempo}</div>
             {slide.notas}
-            <div style={{ marginTop: 10, fontSize: 14, color: C.nevoa }}>→ / espaço / passador: avançar (câmera, depois slide) · ↓ ↑: câmera · ←: voltar slide · F: tela cheia · N: esconder notas</div>
+            <div style={{ marginTop: 10, fontSize: 14, color: C.nevoa }}>→ / espaço / passador: avançar (zoom do print, depois slide) · ↓ ↑: zoom · ←: voltar slide · F: tela cheia · N: esconder notas</div>
           </div>
         )}
       </div>

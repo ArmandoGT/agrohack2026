@@ -1,6 +1,6 @@
 // npm run capturar-telas — gera as imagens da seção "Telas" do README em docs/img/.
 // npm run capturar-telas -- pitch — gera as telas da apresentação em public/pitch/ e grava em
-//   src/app/pitch/focos.json o tamanho de cada tela e as paradas da câmera dos slides (em px CSS).
+//   src/app/pitch/focos.json o tamanho de cada tela e as paradas do zoom dos slides (em px CSS).
 // Requer o app rodando (npm run build && npm start) e o Microsoft Edge (ou Chrome/Chromium,
 // indicado em EDGE_PATH). Usa o protocolo de depuração do navegador (CDP) direto, sem dependências extras.
 
@@ -158,6 +158,7 @@ async function main() {
     let f = tela("painel");
     f.resumo = await caixa(`document.querySelector('section[aria-label="Resumo para o gestor"]')`);
     f.niveis = await caixa(`document.querySelector('section[aria-label="Resumo"] > div')`);
+    f.indicadores = await caixa(`document.querySelector('section[aria-label="Resumo"]')`);
     await capturar("painel");
     await abrir("/", CARTAO);
     await recortar("alerta-diesel", cardDiesel);
