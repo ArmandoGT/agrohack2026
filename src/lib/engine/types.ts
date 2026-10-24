@@ -94,6 +94,29 @@ export interface ProdutoAnalise {
   classeABC: "A" | "B" | "C" | null;
   movimentacoes: Movimentacao[];
   unidadesIgnoradas: number; // movimentações com unidade incompatível
+  /** Preenchido pelo nó de previsão; nenhum detector usa este campo. */
+  previsao?: PrevisaoConsumo;
+}
+
+export interface PrevisaoConsumo {
+  /** modelo = venceu a média no teste; media = a média errou menos; curto = histórico insuficiente. */
+  status: "modelo" | "media" | "curto";
+  motivo: string;
+  /** Consumo acumulado previsto a cada semana a partir da data de referência, com faixa de 80%. */
+  projecao: { data: string; centro: number; baixo: number; alto: number }[];
+  /** Dias até zerar o saldo: centro, otimista (consumo baixo) e pessimista (consumo alto); null = além de 12 semanas. */
+  diasAteZerar: { centro: number | null; otimista: number | null; pessimista: number | null } | null;
+  backtest: {
+    rodadas: number;
+    semanasTestadas: number;
+    erroModelo: number; // erro absoluto médio por semana
+    erroMedia: number;
+    wapeModelo: number | null; // erro somado ÷ consumo real somado
+    wapeMedia: number | null;
+    faixaAcertou: number; // rodadas em que o consumo real ficou dentro da faixa de 80%
+  } | null;
+  parametros: { alfa: number; beta: number; phi: number } | null;
+  tendenciaSemanal: number | null;
 }
 
 export interface Config {

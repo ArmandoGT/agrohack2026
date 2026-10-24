@@ -14,7 +14,7 @@ const PERGUNTAS: [string, string, string][] = [
   ["Quais produtos podem vencer antes de serem utilizados?", "Vencimento por lote, com consumo previsto (FEFO)", "/"],
   ["Quanto está sendo consumido de cada produto?", "Gráfico semanal e consumo médio na ficha do produto", "/produtos"],
   ["Existem movimentações ou consumos fora do padrão?", "Retirada fora do padrão + Consumo em alta", "/"],
-  ["Por quanto tempo o estoque atual será suficiente?", "Cobertura em dias, data prevista e projeção no gráfico", "/produtos"],
+  ["Por quanto tempo o estoque atual será suficiente?", "Cobertura em dias, data prevista, projeção e previsão do modelo com faixa", "/produtos"],
   ["Quais produtos representam maior valor armazenado?", "Curva ABC, Dinheiro parado e Excesso", "/financeiro"],
   ["Quais itens merecem atenção imediata?", "Score de prioridade e níveis Crítico / Atenção / Monitorar", "/"],
 ];
@@ -34,7 +34,7 @@ const CRITERIOS: [string, string][] = [
 ];
 
 const LIMITES = [
-  "Projeções supõem que o consumo recente se mantém; não modelam sazonalidade de safra (ex.: sementes no plantio).",
+  "Os alertas supõem que o consumo recente se mantém. O modelo de previsão capta tendência, mas ainda não modela sazonalidade de safra (ex.: sementes no plantio).",
   "Com poucas retiradas, a confiança é marcada como baixa e a estimativa deve ser lida como indicativa.",
   "Sem lote informado nas saídas, assumimos que o lote que vence primeiro é usado primeiro (FEFO).",
   "Preço ou validade ausentes não viram zero: ficam como “não informado” e o valor é marcado como estimado.",
@@ -67,7 +67,7 @@ function Dag({ nos }: { nos: DagExecucao[] }) {
         )}
         {nos.map((n) => {
           const p = pos.get(n.id)!;
-          const det = nivel.get(n.id) === 3 && n.id !== "grafo_duplicados";
+          const det = nivel.get(n.id) === 3 && n.id !== "grafo_duplicados" && n.id !== "previsao";
           return (
             <g key={n.id} transform={`translate(${p.x},${p.y})`}>
               <rect width={W} height={H} rx={8} fill={det ? "var(--brand-soft)" : "var(--surface)"} stroke={det ? "var(--brand)" : "var(--border-strong)"} />
@@ -83,6 +83,7 @@ function Dag({ nos }: { nos: DagExecucao[] }) {
 
 export default function ComoFunciona() {
   const { analise, dataReferencia, definirDataReferencia } = useDados();
+  const contar = (st: string) => analise.produtos.filter((p) => p.previsao?.status === st).length;
   return (
     <>
       <Titulo titulo="Como funciona" subtitulo="Os critérios, o caminho dos dados e os limites da solução, explicados para quem vai decidir." />
@@ -107,6 +108,25 @@ export default function ComoFunciona() {
         <h2 className="text-xl font-semibold md:text-2xl">Pipeline de análise (grafo acíclico)</h2>
         <p className="mt-0.5 mb-3 text-sm text-muted">Cada caixa é uma etapa. Os detectores (em verde) rodam em paralelo sobre os saldos e alimentam o score de prioridade. Tempos reais desta execução.</p>
         <Dag nos={analise.dag} />
+      </Card>
+
+      <Card className="mt-5">
+        <h2 className="text-xl font-semibold md:text-2xl">Previsão de consumo (modelo)</h2>
+        <div className="mt-2 space-y-2 text-base text-muted">
+          <p>
+            Para cada produto, um modelo de <strong className="text-text">suavização exponencial de Holt</strong> aprende o nível e a tendência do consumo semanal. Os parâmetros são
+            escolhidos pelo menor erro no próprio histórico do produto. Tudo roda no navegador, sem enviar dados para fora.
+          </p>
+          <p>
+            <strong className="text-text">O modelo só aparece quando prova que é melhor.</strong> Escondemos as últimas 4 semanas (em até 3 rodadas), ajustamos o modelo sem elas e
+            comparamos com o consumo real. Ele só é mostrado se errar pelo menos 5% menos que a média simples. Caso contrário, a ficha do produto diz que a média foi melhor.
+          </p>
+          <p>
+            Nesta base, o modelo venceu em <strong className="text-text">{contar("modelo")}</strong> produto(s), a média em {contar("media")}, e {contar("curto")} têm histórico curto
+            demais. Nenhum alerta depende do modelo: os alertas continuam usando a média, que é simples de explicar. Como a base é simulada, o teste prova o método, não o acerto numa
+            fazenda real.
+          </p>
+        </div>
       </Card>
 
       <Card className="mt-5">

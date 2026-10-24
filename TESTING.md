@@ -7,12 +7,13 @@ Este documento é a evidência de qualidade pedida no regulamento (seção 7, it
 Tudo roda com um comando e também no CI (GitHub Actions), a cada push:
 
 ```bash
-npm test               # 18 testes automatizados (Vitest)
+npm test               # 26 testes automatizados (Vitest)
 npm run eval           # loop de avaliação contra o gabarito → docs/eval-report.md
 npm run eval:robustez  # o mesmo loop em 10 bases simuladas diferentes
+npm run eval:previsao  # backtest do modelo de previsão → docs/eval-previsao.md
 ```
 
-## 1. O que é um oráculo, e por que temos três
+## 1. O que é um oráculo, e por que temos quatro
 
 Um **oráculo de teste** é o mecanismo que decide se o resultado de uma execução está correto (BSTQB, *Certified Tester Foundation Level* v4.0, 2023). Sem oráculo, há execução, mas não há teste. As partes do AgroSentinela têm naturezas diferentes, então cada uma tem um oráculo diferente:
 
@@ -21,6 +22,7 @@ Um **oráculo de teste** é o mecanismo que decide se o resultado de uma execuç
 | Leitura e tratamento dos dados | **Especificado** | As regras do próprio regulamento (seção 4.4): unidades diferentes não se somam, ausência não vira zero, datas e números em vários formatos |
 | Detectores de alerta | **Gabarito construído** | Anomalias plantadas de propósito na base simulada, listadas em `data/ground_truth.json` |
 | Reanálise e interface | **Especificado** | O aviso esperado depois de uma ação definida (ex.: retirada de 170 L de glifosato) |
+| Modelo de previsão | **Dados reais escondidos (backtest)** | O consumo que de fato aconteceu nas últimas 4 semanas, escondidas do modelo; a referência a vencer é a média simples de 30 dias |
 
 Os casos de erro seguem a ideia de **partição do espaço de entradas e análise de valor limite** (BSTQB, 2023): o caminho feliz usa entradas válidas e esperadas, e os casos de erro usam entradas inválidas, ausentes ou de fronteira, onde os defeitos costumam aparecer.
 
@@ -88,7 +90,25 @@ Os falsos positivos de cada rodada estão em `docs/eval-report.md`, e o históri
 | RE-03 | Unificar "KCl" com "Cloreto de potássio (KCl)" | A análise é refeita e o alarme falso do KCl é resolvido | `tests/engine.test.ts` › "fusão confirmada pelo usuário une os produtos e refaz a análise" |
 | RE-E1 | Pipeline com dependência circular entre etapas | Erro explícito, sem execução parcial | › "executa em ordem topológica e detecta ciclos" |
 
-## 5. Interface (teste manual guiado)
+## 5. Modelo de previsão (`src/lib/engine/previsao.ts`)
+
+**Oráculo:** o consumo real das semanas escondidas. O modelo é ajustado sem as últimas 4 semanas, em até 3 rodadas (cortes em −4, −8 e −12 semanas), e a previsão é comparada com o que aconteceu e com a média de 30 dias anterior ao corte. Isso se chama validação com origem móvel (*rolling origin*).
+
+| ID | Caso | Resultado esperado | Evidência |
+|---|---|---|---|
+| PR-01 | Consumo diário somado em semanas | Semanas completas que terminam no último dia da série | `tests/previsao.test.ts` |
+| PR-02 | Série com tendência linear | O modelo aprende a tendência e projeta acima do último valor | `tests/previsao.test.ts` |
+| PR-03 | Consumo crescente por 200 dias | O modelo vence a média com folga de 5% e prevê que o saldo zera antes | `tests/previsao.test.ts` |
+| PR-04 | Faixa de incerteza | Contém a previsão central e se alarga com o horizonte | `tests/previsao.test.ts` |
+| PR-05 | Consumo estável com ruído | A decisão entre modelo e média é coerente com o teste | `tests/previsao.test.ts` |
+| PR-06 | Alertas com e sem o modelo | Idênticos: o modelo não altera nenhum alerta | `tests/previsao.test.ts` |
+| PR-07 | 10 bases simuladas, todos os produtos | Erro do modelo menor que o da média no total; cobertura da faixa medida | `npm run eval:previsao` → `docs/eval-previsao.md` |
+| PR-E1 | Histórico de menos de 16 semanas | Sem previsão, com o motivo | `tests/previsao.test.ts` |
+| PR-E2 | Produto sem consumo | Sem previsão | `tests/previsao.test.ts` |
+
+**Resultado atual (10 bases simuladas):** o modelo erra 6,2% menos que a média (WAPE de 27,3% contra 29,1%), e a faixa de 80% contém o consumo real em 87,3% das rodadas. Testamos também abrir a faixa linearmente com o horizonte: a cobertura foi para 96%, larga demais para uma faixa de 80%, e voltamos para a abertura por √h. **Limitação:** a base é simulada, então o teste prova o método, não o acerto numa fazenda real. Em séries que aceleram (ex.: o diesel), a faixa fica estreita, e a ficha avisa quando o consumo real saiu dela na maioria dos testes.
+
+## 6. Interface (teste manual guiado)
 
 **Oráculo:** o que a tela mostra é exatamente o resultado da análise. Cor, texto e ícone do nível vêm do mesmo campo `nivel` de cada alerta.
 
@@ -97,18 +117,21 @@ Os falsos positivos de cada rodada estão em `docs/eval-report.md`, e o históri
 | UI-01 | Abrir https://agrohack-agrosentinela.netlify.app | Painel do dia com o resumo para o gestor e a contagem por nível; sem login |
 | UI-02 | Tocar no card "Críticos" | A lista de alertas mostra só os críticos |
 | UI-03 | Abrir um produto pela lista | Ficha com saldo, consumo, "Dura até", gráficos e lotes |
+| UI-05 | Abrir a ficha do diesel | Cartão "Previsão do modelo" com a data em que o saldo zera, a faixa, a tendência e o resultado do teste; linha dourada e faixa sombreada no gráfico do saldo |
+| UI-06 | Abrir a ficha do glifosato | O cartão diz que o modelo não foi claramente melhor que a média, com os dois erros |
 | UI-04 | Abrir no celular (390 px) | Menu fixo no rodapé, tabela de produtos em cards, nada cortado |
 | UI-E1 | Importar um arquivo com colunas faltando | As colunas "não encontrada" aparecem antes de usar a base |
 | UI-E2 | Sistema com "reduzir movimento" ligado | As animações viram fade e nada deixa de funcionar |
 
-## 6. O que funciona e o que ainda precisa melhorar
+## 7. O que funciona e o que ainda precisa melhorar
 
-**Funciona e está testado:** a leitura e o tratamento dos dados, os 10 detectores, a prioridade, a reanálise ao registrar ou unificar e a importação de CSV e XLSX.
+**Funciona e está testado:** a leitura e o tratamento dos dados, os 10 detectores, a prioridade, a reanálise ao registrar ou unificar, a importação de CSV e XLSX e o modelo de previsão com backtest.
 
 **Precisa melhorar:**
 - Medir recall e precisão na **base oficial**, com revisão manual dos alertas (`docs/validacao.md`, seção 3).
 - Ter teste automatizado de interface. Hoje a interface é testada manualmente, pelos casos acima.
 - Calibrar os limiares (prazo de compra, excesso, sazonalidade) com quem trabalha no campo.
+- Validar o modelo de previsão na base oficial e tratar a sazonalidade de safra.
 
 ## Referências
 

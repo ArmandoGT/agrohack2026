@@ -2,7 +2,7 @@
 
 Conforme a seção 6 do regulamento do AGROHACK 2026/2: ferramentas, finalidades, partes apoiadas e o que a equipe revisou e validou.
 
-**Resumo honesto:** este projeto foi desenvolvido com **forte apoio de IA na escrita do código e da documentação**. Isso não muda quem decide. O problema, o público, os critérios de alerta aceitos, o visual e cada mudança que entrou no repositório passaram por decisão e revisão da equipe. O sistema entregue **não usa IA em tempo de execução**: todo alerta vem de uma regra que pode ser explicada ao usuário (ver o fim deste documento).
+**Resumo honesto:** este projeto foi desenvolvido com **forte apoio de IA na escrita do código e da documentação**. Isso não muda quem decide. O problema, o público, os critérios de alerta aceitos, o visual e cada mudança que entrou no repositório passaram por decisão e revisão da equipe. O sistema entregue **não usa modelos de linguagem (LLM)** nem envia dados para fora. Todo alerta vem de uma regra que pode ser explicada ao usuário. A única parte que aprende com os dados é um **modelo estatístico de previsão de consumo**, que só é mostrado onde provou ser melhor que a média (ver o fim deste documento).
 
 ## Ferramentas
 
@@ -43,6 +43,7 @@ Estes casos mostram por que a revisão humana é parte do método, e não um det
 - **Quais critérios de alerta aceitar e com quais limites.** Por exemplo: unidades diferentes não se somam e preço ausente não vira zero. Os critérios estão em `docs/criterios-alertas.md` e na tela *Como funciona*.
 - **Identidade visual "Iluminura"** e a regra de que a usabilidade para o leigo vem antes da estética.
 - **O roteiro e o tom do pitch**, e o que mostrar em cada momento da demo.
+- **Como entrar com um modelo de previsão sem virar caixa-preta.** Depois de analisar o projeto vencedor do hackathon anterior (um Random Forest treinado com rótulos da própria regra), decidimos: o modelo é testado contra a média simples em semanas escondidas, só aparece onde vence com folga de 5%, mostra a faixa de incerteza e o resultado do teste na ficha, e **não altera nenhum alerta**.
 - **O que adotar da crítica da Arena** (`docs/validacao-arena.md`): a IA gerou as críticas e a equipe escolheu quais viraram mudança.
 
 ## Registro de revisão por integrante
@@ -58,9 +59,9 @@ Estes casos mostram por que a revisão humana é parte do método, e não um det
 - Nenhuma credencial, chave privada (o comprovante de inscrição da equipe fica fora do repositório) ou dado pessoal real foi enviado às ferramentas de IA.
 - A base usada no desenvolvimento é **simulada** e identificada como tal. A base oficial só é usada conforme as orientações da organização.
 
-## O que a IA **não** faz dentro da solução
+## O que roda dentro da solução
 
-O sistema entregue **não chama nenhum modelo de IA**. Os alertas vêm de regras estatísticas explicáveis:
+O sistema entregue **não chama nenhum modelo de linguagem (LLM)** nem serviço de IA externo. Os alertas vêm de regras estatísticas explicáveis:
 - médias e mediana/MAD;
 - regressão por blocos;
 - consumo dos lotes em ordem de validade (quem vence primeiro sai primeiro);
@@ -68,3 +69,8 @@ O sistema entregue **não chama nenhum modelo de IA**. Os alertas vêm de regras
 - similaridade de texto.
 
 Por isso, cada alerta pode ser justificado ao usuário, no próprio card ("Como calculamos?").
+
+A única parte que **aprende com os dados** é o modelo de previsão de consumo (`src/lib/engine/previsao.ts`): suavização exponencial de Holt, com nível e tendência amortecida. Os parâmetros são escolhidos pelo menor erro no histórico de cada produto. Ele roda no navegador e é informativo:
+- é testado contra a média simples escondendo as últimas 4 semanas (`npm run eval:previsao`, resultado em `docs/eval-previsao.md`);
+- só aparece na ficha do produto em que venceu a média com folga de 5%, junto com a faixa de incerteza e o resultado do teste;
+- não altera nenhum alerta (garantido por teste automatizado, PR-06 em `TESTING.md`).
