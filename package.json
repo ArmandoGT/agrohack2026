@@ -10,7 +10,8 @@
     "gerar-dados": "tsx scripts/generate-data.ts",
     "eval": "tsx scripts/eval.ts",
     "test": "vitest run",
-    "eval:robustez": "tsx scripts/eval-robustez.ts"
+    "eval:robustez": "tsx scripts/eval-robustez.ts",
+    "capturar-telas": "tsx scripts/capturar-telas.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

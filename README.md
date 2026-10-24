@@ -44,6 +44,23 @@
 | **Importar planilha** | CSV ou Excel com **mapeamento automático de colunas** e relatório de linhas rejeitadas |
 | **Como funciona** | As 7 perguntas do edital, o pipeline (DAG) com tempos reais, critérios e limites |
 
+### Telas
+
+| | |
+|---|---|
+| ![Painel do dia com resumo para o gestor e contagem por nível](docs/img/painel.png) | ![Lista de produtos com saldo, cobertura e curva ABC](docs/img/produtos.png) |
+| **Painel do dia** — resumo para o gestor, alertas por nível e o botão para registrar logo no topo. | **Produtos** — saldo, mínimo, consumo por dia, cobertura em dias e curva ABC de cada item. |
+| ![Ficha do Óleo diesel S10 com indicadores e alertas](docs/img/ficha-produto.png) | ![Registro de uma retirada com o aviso de reanálise](docs/img/registrar.png) |
+| **Ficha do produto** — quanto tem, quanto gasta, até quando dura e o que fazer. | **Registrar entrada ou saída** — ao salvar, o aviso no canto mostra os alertas que surgiram. |
+| ![Financeiro com curva ABC e valor por categoria](docs/img/financeiro.png) | ![Cadastros duplicados com grupos de nomes parecidos](docs/img/cadastros.png) |
+| **Financeiro** — curva ABC, valor por categoria e dinheiro em risco. | **Cadastros duplicados** — nomes parecidos agrupados; unificar refaz a análise. |
+| ![Importação de planilha CSV ou Excel](docs/img/importar.png) | ![Como funciona: as 7 perguntas do desafio e o pipeline](docs/img/como-funciona.png) |
+| **Importar planilha** — CSV ou Excel, com as colunas reconhecidas pelo nome. | **Como funciona** — as 7 perguntas do desafio, o pipeline e os critérios. |
+| ![Painel do dia no celular](docs/img/celular-painel.png) | ![Produtos no celular, em cards](docs/img/celular-produtos.png) |
+| **Celular** — menu fixo no rodapé, botões grandes e textos legíveis. | **Celular** — a tabela de produtos vira uma lista de cards. |
+
+Capturas de 23/10/2026 com a base **SIMULADA**, em 1440×900 (computador) e 390×844 (celular). A tela de registro mostra uma retirada de 900 L de glifosato feita só para a ilustração. Para gerar de novo: `npm run build && npm start` e, em outro terminal, `npm run capturar-telas` (requer o Microsoft Edge).
+
 ### Os 10 detectores
 
 1. Estoque crítico
