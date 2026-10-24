@@ -294,9 +294,9 @@ const Momento3 = () => (
 );
 
 const Momento4 = () => (
-  <Momento n={4} numero={<><Contador ate={300} dur={1.2} /> L</>}
-    legenda={<>de glifosato retirados de uma vez. Salvou, o sistema refez tudo e <b style={{ color: C.amber }}>avisou na hora: Novo · Crítico.</b></>}
-    etapas={[{ src: "/pitch/registrar-novo.png", alt: "Aviso de novo alerta crítico após registrar retirada", foco: { x: 72.9, y: 88.2, w: 26, h: 10.4 }, zoom: 1.3 }]} />
+  <Momento n={4} numero={<><Contador ate={170} dur={1.2} /> L</>}
+    legenda={<>de glifosato retirados de uma vez. Salvou, o sistema refez tudo e <b style={{ color: C.amber }}>avisou na hora: Novo · Atenção · Vai faltar em breve.</b></>}
+    etapas={[{ src: "/pitch/registrar-novo.png", alt: "Aviso de novo alerta de atenção após registrar retirada", foco: { x: 72.9, y: 88.2, w: 26, h: 10.4 }, zoom: 1.3 }]} />
 );
 
 function Perguntas() {
@@ -504,8 +504,8 @@ export const SLIDES: { id: string; titulo: string; tempo: string; notas: string;
     notas: "“O consumo subiu 87% em 4 meses. Quem olhasse a média do ano acharia que está tudo bem.” Apontar as barras subindo no fim do gráfico." },
   { id: "m3", titulo: "Momento 3 · 1 clique", tempo: "2:15–2:35", Componente: Momento3,
     notas: "“Era o mesmo adubo com dois nomes: KCl e Cloreto de potássio. Um clique, a análise é refeita e o alarme falso de ‘vai faltar’ some sozinho.” A tela troca sozinha para o aviso ‘Resolvido’." },
-  { id: "m4", titulo: "Momento 4 · 300 L", tempo: "2:35–2:55", Componente: Momento4,
-    notas: "“Alguém tirou 300 litros de glifosato de uma vez. Na hora o sistema refaz tudo e avisa: Novo, Crítico. É o tipo de coisa que hoje só se descobre no fim do mês.”" },
+  { id: "m4", titulo: "Momento 4 · 170 L", tempo: "2:35–2:55", Componente: Momento4,
+    notas: "“Alguém tirou 170 litros de glifosato de uma vez. Na hora o sistema refaz tudo e avisa: Novo, Atenção, vai faltar em breve. É o tipo de coisa que hoje só se descobre no fim do mês.”" },
   { id: "perguntas", titulo: "As 7 perguntas", tempo: "2:55–3:10", Componente: Perguntas,
     notas: "Rápido: “As 7 perguntas do desafio têm resposta no sistema — e o mapa está na tela Como funciona.” Não ler a lista inteira." },
   { id: "confianca", titulo: "Por que confiar", tempo: "3:10–3:40", Componente: Confianca,

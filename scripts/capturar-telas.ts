@@ -1,5 +1,5 @@
 // npm run capturar-telas — gera as imagens da seção "Telas" do README em docs/img/.
-// Requer o app rodando (npm run build && npm start) e o Microsoft Edge instalado.
+// Requer o app rodando (npm run build && npm start) e o Microsoft Edge (ou Chrome/Chromium, indicado em EDGE_PATH).
 // Usa o protocolo de depuração do navegador (CDP) direto, sem dependências extras.
 
 import { spawn } from "node:child_process";
@@ -11,6 +11,9 @@ const BASE = process.env.APP_URL ?? "http://localhost:3000";
 const EDGE = process.env.EDGE_PATH ?? "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const PORTA = 9333;
 const SAIDA = join(process.cwd(), "docs", "img");
+
+/** Retirada da demonstração: ver README (seção 6) e tests/demo.test.ts. */
+const RETIRADA_DEMO_L = "170";
 
 const DESKTOP = { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false };
 const CELULAR = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
@@ -34,7 +37,8 @@ async function conectar() {
 async function main() {
   mkdirSync(SAIDA, { recursive: true });
   const perfil = mkdtempSync(join(tmpdir(), "agrosentinela-telas-"));
-  const edge = spawn(EDGE, ["--headless=new", `--remote-debugging-port=${PORTA}`, `--user-data-dir=${perfil}`, "--hide-scrollbars", "--no-first-run", "about:blank"], { stdio: "ignore" });
+  const semSandbox = process.platform === "linux" && process.getuid?.() === 0 ? ["--no-sandbox"] : [];
+  const edge = spawn(EDGE, ["--headless=new", `--remote-debugging-port=${PORTA}`, `--user-data-dir=${perfil}`, "--hide-scrollbars", "--no-first-run", ...semSandbox, "about:blank"], { stdio: "ignore" });
 
   const ws = new WebSocket(await conectar());
   await new Promise((r) => ws.addEventListener("open", r, { once: true }));
@@ -89,7 +93,7 @@ async function main() {
       };
       const campos = document.querySelectorAll("form input");
       definir(campos[0], "Herbicida glifosato");
-      definir(campos[1], "900");
+      definir(campos[1], "${RETIRADA_DEMO_L}");
     })()`);
     await espera(300);
     await avaliar(`document.querySelector("form").requestSubmit()`);
