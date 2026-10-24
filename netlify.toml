@@ -1,0 +1,8 @@
+# Deploy na Netlify: roda o build do Next.js e publica .next.
+# A Netlify detecta o Next.js e usa o adaptador oficial (rotas, SSR e imagens).
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
