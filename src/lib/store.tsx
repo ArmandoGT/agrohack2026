@@ -5,16 +5,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { analisar } from "./engine";
-import type { Alerta, Analise, Movimentacao, Nivel } from "./engine/types";
+import type { Analise, Movimentacao } from "./engine/types";
 import { lerCsv } from "./import";
+import { comparar, type Mudanca } from "./mudanca";
 import * as db from "./persistencia";
 
-export interface Mudanca {
-  descricao: string;
-  novos: Alerta[];
-  resolvidos: Alerta[];
-  mudaramNivel: { antes: Nivel; depois: Alerta }[];
-}
+export type { Mudanca };
 
 interface Ctx {
   pronto: boolean;
@@ -36,20 +32,6 @@ interface Ctx {
 }
 
 const Contexto = createContext<Ctx | null>(null);
-const chaveAlerta = (a: Alerta) => `${a.detector}|${a.produtoKey}|${a.evidencias.lote ?? a.evidencias.data ?? ""}`;
-
-function comparar(antes: Analise, depois: Analise, descricao: string): Mudanca {
-  const mapaAntes = new Map(antes.alertas.map((a) => [chaveAlerta(a), a]));
-  const mapaDepois = new Map(depois.alertas.map((a) => [chaveAlerta(a), a]));
-  return {
-    descricao,
-    novos: depois.alertas.filter((a) => !mapaAntes.has(chaveAlerta(a))),
-    resolvidos: antes.alertas.filter((a) => !mapaDepois.has(chaveAlerta(a))),
-    mudaramNivel: depois.alertas
-      .filter((a) => mapaAntes.has(chaveAlerta(a)) && mapaAntes.get(chaveAlerta(a))!.nivel !== a.nivel)
-      .map((a) => ({ antes: mapaAntes.get(chaveAlerta(a))!.nivel, depois: a })),
-  };
-}
 
 export function ProvedorDados({ children }: { children: React.ReactNode }) {
   const [pronto, setPronto] = useState(false);

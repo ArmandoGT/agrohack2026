@@ -11,10 +11,13 @@
   - **F** liga a tela cheia;
   - **N** mostra as notas do apresentador, com fala e tempo de cada slide.
 - **Conteúdo:**
-  - 15 slides animados com a biblioteca Motion;
-  - as telas são **capturas reais do sistema** (base simulada), em `public/pitch/`;
-  - nos 4 momentos da demo, a tela dá zoom e destaca o ponto que está sendo falado.
+  - 15 slides animados com a biblioteca Motion, com a mesma identidade "Iluminura" do app: pergaminho, folha de ouro, cinabre e ultramarino, com EB Garamond nos títulos e Source Sans 3 no texto. Os slides escuros imitam um painel de altar, em ultramarino com ouro, e todos os textos passam o contraste AA com folga para projetor;
+  - o motion acompanha a fala: filetes de ouro que se desenham, capitulares que surgem e revelações em sequência. Nada fica em loop, e a troca de slide leva 0,6 s;
+  - as telas são **capturas reais do sistema** (base simulada), em `public/pitch/`. Nos 4 momentos da demo, um arco ogival se abre sobre a tela, o zoom aproxima o ponto que está sendo falado e um filete de ouro o contorna;
+  - se o computador estiver com **"reduzir movimento"** ligado, os slides só fazem fade, sem zoom nem deslocamento.
+- **Recapturar as telas** (por exemplo, com a base oficial): com o app rodando (`npm run build && npm start`), rode `npm run capturar-telas -- pitch`. O script regrava `public/pitch/*.png` nos mesmos estados e `src/app/pitch/focos.json`, que diz onde o zoom deve parar em cada tela. No Linux, indique o navegador com `EDGE_PATH=/caminho/do/chrome`.
 - **Base oficial:** quando ela sair, refazer as capturas com ela e trocar os números dos slides 6 a 9.
+- **Prévia:** [capa](img/pitch/slide-01-capa.jpg), [a dor](img/pitch/slide-02-dor.jpg), [momento 4 da demo](img/pitch/slide-09-momento4.jpg), [por que confiar](img/pitch/slide-11-confianca.jpg); transições: [abertura](img/pitch/transicao-abertura.gif) e [momento 3](img/pitch/transicao-momento3.gif).
 
 ## A frase que a banca tem de levar para casa
 
@@ -59,7 +62,7 @@ Mostrem só passos que já foram ensaiados e que **não podem dar errado**. Cada
 | 1 | Painel → card do **diesel** | Abrir *Como calculamos?* | "Mantendo o consumo dos últimos 30 dias, o diesel dura **cerca de 9 dias**. Com o prazo de compra de 15, **ele já está atrasado**. E o sistema mostra a conta e a confiança." |
 | 2 | Ficha do diesel | Mostrar o gráfico com a projeção | "O consumo subiu **87% em 4 meses**. Quem olhasse a média do ano acharia que está tudo bem." |
 | 3 | Cadastros | Unificar **"KCl"** com **"Cloreto de potássio"** | "Era o mesmo adubo com dois nomes. Um clique, e o alarme falso de 'vai faltar' **some sozinho**." |
-| 4 | Registrar | Retirada de **300 L de glifosato** no Talhão 2 | "Alguém tirou 300 litros de uma vez. Na hora o sistema refaz tudo e avisa: **retirada fora do padrão**. É o tipo de coisa que hoje só se descobre no fim do mês." |
+| 4 | Registrar | Retirada de **170 L de glifosato** no Talhão 2, na data sugerida | "Alguém tirou 170 litros de uma vez. Na hora o sistema refaz tudo e avisa: **vai faltar em breve**. É o tipo de coisa que hoje só se descobre no fim do mês." |
 | (opcional, 15 s) | Financeiro | Curva ABC | "E **11 itens concentram 80%** do dinheiro parado no galpão. É ali que o Seu João tem de olhar primeiro." |
 
 **Regras de segurança da demo:**
@@ -103,7 +106,7 @@ Mostrem só passos que já foram ensaiados e que **não podem dar errado**. Cada
 ## Técnicas de venda para o palco
 
 - **Comecem pela história, não pela tecnologia.** Ninguém se importa com DAG antes de se importar com o Seu João.
-- **Um número por momento.** "9 dias", "87%", "300 litros", "17 de 17". Números concretos grudam; listas não.
+- **Um número por momento.** "9 dias", "87%", "170 litros", "17 de 17". Números concretos grudam; listas não.
 - **Mostrem, não descrevam.** Toda frase da demo acontece na tela ao mesmo tempo.
 - **Admitam o limite antes da banca perguntar.** Isso tira a arma da mão dela e passa confiança.
 - **Fraqueza vira roadmap.** "Ainda não faz X" vira "o próximo passo é X, e já sabemos como".

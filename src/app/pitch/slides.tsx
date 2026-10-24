@@ -1,36 +1,86 @@
 "use client";
 
 // Slides do pitch (roteiro em docs/pitch.md). Cada slide é um componente de 1920×1080;
-// as telas reais ficam em public/pitch/ (capturas do app rodando com a base simulada).
+// as telas reais ficam em public/pitch/ (capturas do app rodando com a base simulada) e
+// focos.json diz onde fica o ponto destacado em cada uma (os dois saem de `npm run capturar-telas -- pitch`).
+//
+// Identidade "Iluminura", a mesma do app: pergaminho e marfim, folha de ouro, cinabre, ultramarino
+// e verde-terra; EB Garamond nos títulos e Source Sans 3 no texto. Os slides escuros são um
+// "painel de altar": ultramarino profundo com ouro. Todos os pares de texto passam AA com folga (≥ 5:1).
+//
+// Motion: filetes de ouro que se desenham, capitulares que surgem, arco ogival que se abre sobre as
+// telas e revelações em sequência. Nada fica em loop. Com prefers-reduced-motion, só fade
+// (o MotionConfig da Apresentacao desliga os transforms; aqui desligamos traços, recortes e zoom).
 
-import { animate, motion } from "motion/react";
-import { useEffect, useState, type ReactNode } from "react";
+import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import FOCOS from "./focos.json";
 
 export const C = {
-  dark: "#10241B",
-  dark2: "#183528",
-  light: "#F5F1E6",
-  card: "#FFFDF7",
-  amber: "#E8A33D",
-  green: "#2E6B47",
-  greenLight: "#6FBF8B",
-  soft: "#C3D3C7",
-  softL: "#4A5A50",
-  crit: "#B83A26",
+  noite: "#0E1528", // ultramarino profundo: fundo dos slides escuros
+  noite2: "#1A2650",
+  pergaminho: "#F3EAD5",
+  marfim: "#FDF8EC",
+  ouro: "#D4AF5A", // folha de ouro sobre a noite
+  ouroClaro: "#E8CF8A",
+  ouroEscuro: "#7A5C1C", // ouro que pode ser texto sobre o pergaminho
+  nevoa: "#C3CADC", // texto secundário sobre a noite
+  tinta: "#2B2116",
+  tintaSuave: "#5C4E3B",
+  cinabre: "#A3241A",
+  cinabreClaro: "#EE8473",
+  ultramar: "#24408E",
+  azulClaro: "#9DB4F0",
+  ocreClaro: "#E6B65C",
+  verde: "#3E5B2B",
+  verdeClaro: "#A9C97F",
+  borda: "#DCCAA0",
 };
 
-const DISPLAY = "var(--font-oswald), 'Arial Narrow', Arial, sans-serif";
+const TITULO = "var(--font-titulo), 'EB Garamond', Georgia, serif";
 const EASE = [0.22, 1, 0.36, 1] as const;
+const NUMEROS: CSSProperties = { fontVariantNumeric: "lining-nums tabular-nums" };
 
 type Foco = { x: number; y: number; w: number; h: number }; // em % da imagem
+type Tema = "noite" | "pergaminho";
+
+const useReduz = () => useReducedMotion() ?? false;
+
+/** Traço que se desenha (pathLength); com movimento reduzido, só aparece. */
+function useTraco(atraso: number, dur: number) {
+  const reduz = useReduz();
+  return reduz
+    ? // pathLength fixo em 1: no primeiro render a preferência ainda não é conhecida e o traço pode ter nascido em 0.
+      { initial: { pathLength: 1, opacity: 0 }, animate: { pathLength: 1, opacity: 1 }, transition: { delay: atraso, duration: 0.4 } }
+    : { initial: { pathLength: 0, opacity: 0 }, animate: { pathLength: 1, opacity: 1 }, transition: { delay: atraso, duration: dur, ease: "easeInOut" as const, opacity: { delay: atraso, duration: 0.01 } } };
+}
 
 // ---------- peças ----------
 
-function Base({ fundo, children }: { fundo: string; children: ReactNode }) {
-  return <div style={{ position: "absolute", inset: 0, background: fundo, padding: 128, overflow: "hidden" }}>{children}</div>;
+function Base({ tema = "noite", children }: { tema?: Tema; children: ReactNode }) {
+  const noite = tema === "noite";
+  return (
+    <div
+      style={{
+        position: "absolute", inset: 0, padding: 128, overflow: "hidden", color: noite ? C.marfim : C.tinta,
+        background: noite
+          ? `radial-gradient(120% 90% at 70% 35%, ${C.noite2}, ${C.noite} 70%)`
+          : `radial-gradient(110% 90% at 30% 20%, ${C.marfim}, ${C.pergaminho} 75%)`,
+      }}
+    >
+      {/* Céu estrelado de ouro (estático), como nos fundos de Fra Angelico */}
+      {noite && (
+        <div aria-hidden style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(212,175,90,.22) 1.3px, transparent 1.8px)", backgroundSize: "56px 56px", maskImage: "linear-gradient(180deg, #000, transparent 60%)", WebkitMaskImage: "linear-gradient(180deg, #000, transparent 60%)" }} />
+      )}
+      {/* Moldura dupla de filete, como a borda de um painel */}
+      <div aria-hidden style={{ position: "absolute", inset: 36, border: `1px solid ${noite ? "rgba(212,175,90,.45)" : "rgba(122,92,28,.35)"}`, pointerEvents: "none" }} />
+      <div aria-hidden style={{ position: "absolute", inset: 44, border: `1px solid ${noite ? "rgba(212,175,90,.2)" : "rgba(122,92,28,.16)"}`, pointerEvents: "none" }} />
+      {children}
+    </div>
+  );
 }
 
-function Entra({ atraso = 0, y = 30, children, style }: { atraso?: number; y?: number; children: ReactNode; style?: React.CSSProperties }) {
+function Entra({ atraso = 0, y = 26, children, style }: { atraso?: number; y?: number; children: ReactNode; style?: CSSProperties }) {
   return (
     <motion.div initial={{ opacity: 0, y }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: atraso, ease: EASE }} style={style}>
       {children}
@@ -38,99 +88,211 @@ function Entra({ atraso = 0, y = 30, children, style }: { atraso?: number; y?: n
   );
 }
 
-function Rotulo({ children, cor = C.amber }: { children: ReactNode; cor?: string }) {
-  return <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: 5, color: cor, textTransform: "uppercase" }}>{children}</div>;
+function Losango({ cor, tam = 12 }: { cor: string; tam?: number }) {
+  return <span aria-hidden style={{ display: "inline-block", width: tam, height: tam, background: cor, transform: "rotate(45deg)", flexShrink: 0 }} />;
 }
 
-function Titulo({ children, cor = C.light, tamanho = 76 }: { children: ReactNode; cor?: string; tamanho?: number }) {
-  return <h2 style={{ fontFamily: DISPLAY, fontSize: tamanho, fontWeight: 600, lineHeight: 1.1, color: cor, margin: 0 }}>{children}</h2>;
+function Rotulo({ children, tema = "noite" }: { children: ReactNode; tema?: Tema }) {
+  const cor = tema === "noite" ? C.ouro : C.ouroEscuro;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 16, fontSize: 24, fontWeight: 600, letterSpacing: 5, color: cor, textTransform: "uppercase" }}>
+      <Losango cor={cor} />
+      {children}
+    </div>
+  );
+}
+
+function Titulo({ children, cor = C.marfim, tamanho = 76 }: { children: ReactNode; cor?: string; tamanho?: number }) {
+  return <h2 style={{ fontFamily: TITULO, fontSize: tamanho, fontWeight: 600, lineHeight: 1.08, color: cor, margin: 0 }}>{children}</h2>;
+}
+
+/** Filete de ouro que se desenha do centro para as pontas, com um quadrifólio no meio. */
+function Filete({ largura, atraso = 0, dur = 1.1, cor = C.ouro, style }: { largura: number; atraso?: number; dur?: number; cor?: string; style?: CSSProperties }) {
+  const tracoE = useTraco(atraso + 0.15, dur);
+  const tracoD = useTraco(atraso + 0.15, dur);
+  const m = largura / 2;
+  return (
+    <svg width={largura} height={20} viewBox={`0 0 ${largura} 20`} style={{ display: "block", overflow: "visible", ...style }} aria-hidden>
+      <motion.path d={`M${m - 18} 10H0`} stroke={cor} strokeWidth={1.6} fill="none" {...tracoE} />
+      <motion.path d={`M${m + 18} 10H${largura}`} stroke={cor} strokeWidth={1.6} fill="none" {...tracoD} />
+      <motion.g initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: atraso, duration: 0.45, ease: EASE }} style={{ transformOrigin: `${m}px 10px` }}>
+        {[[0, -5], [0, 5], [-5, 0], [5, 0]].map(([dx, dy]) => <circle key={`${dx}${dy}`} cx={m + dx} cy={10 + dy} r={4} fill={cor} />)}
+        <circle cx={m} cy={10} r={2.4} fill={C.cinabre} />
+      </motion.g>
+    </svg>
+  );
+}
+
+/** Capitular iluminada: quadro de ouro que se desenha, fundo ultramarino e a letra que surge. */
+function Capitular({ letra, tam = 180, atraso = 0, cor = C.ouroClaro, style }: { letra: string; tam?: number; atraso?: number; cor?: string; style?: CSSProperties }) {
+  const traco = useTraco(atraso, 0.9);
+  const t2 = useTraco(atraso + 0.2, 0.9);
+  return (
+    <span aria-hidden style={{ position: "relative", display: "inline-block", width: tam, height: tam, flexShrink: 0, ...style }}>
+      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: atraso + 0.1, duration: 0.6 }}
+        style={{ position: "absolute", inset: 8, background: `linear-gradient(160deg, ${C.ultramar}, ${C.noite2})` }} />
+      <svg width={tam} height={tam} viewBox={`0 0 ${tam} ${tam}`} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+        <motion.rect x={2} y={2} width={tam - 4} height={tam - 4} fill="none" stroke={C.ouro} strokeWidth={3} {...traco} />
+        <motion.rect x={8} y={8} width={tam - 16} height={tam - 16} fill="none" stroke={C.ouroClaro} strokeWidth={1} {...t2} />
+      </svg>
+      <motion.span initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: atraso + 0.45, duration: 0.7, ease: EASE }}
+        style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: TITULO, fontWeight: 700, fontSize: tam * 0.78, lineHeight: 1, color: cor, paddingTop: tam * 0.04 }}>
+        {letra}
+      </motion.span>
+    </span>
+  );
 }
 
 function Contador({ ate, prefixo = "", sufixo = "", atraso = 0.4, dur = 1.4 }: { ate: number; prefixo?: string; sufixo?: string; atraso?: number; dur?: number }) {
-  const [v, setV] = useState(0);
+  const reduz = useReduz();
+  const [v, setV] = useState(reduz ? ate : 0);
   useEffect(() => {
+    if (reduz) return setV(ate);
     const c = animate(0, ate, { duration: dur, delay: atraso, ease: "easeOut", onUpdate: (x) => setV(Math.round(x)) });
     return () => c.stop();
-  }, [ate, atraso, dur]);
-  return <>{prefixo}{v}{sufixo}</>;
+  }, [ate, atraso, dur, reduz]);
+  return <span style={NUMEROS}>{prefixo}{v}{sufixo}</span>;
 }
 
-function Imagem({ src, alt }: { src: string; alt: string }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />;
+/**
+ * Moldura com topo em arco ogival que se desenha e depois "abre" o conteúdo do centro para as
+ * bordas, como as portas de um retábulo. Tamanho fixo em px, então o arco nunca é esticado.
+ */
+function Arco({ largura, alturaArco = 96, atraso = 0.2, tema = "noite", rotulo, children, corpo }: {
+  largura: number; alturaArco?: number; atraso?: number; tema?: Tema; rotulo?: string; children: ReactNode; corpo?: CSSProperties;
+}) {
+  const reduz = useReduz();
+  const L = largura, A = alturaArco, m = 1.5;
+  const noite = tema === "noite";
+  const traco = noite ? C.ouro : C.ouroEscuro;
+  const arco = (i: number) => `M${m + i} ${A} C${m + i} ${A * 0.42 + i * 0.3} ${L * 0.28} ${A * 0.14 + i * 0.5} ${L / 2} ${m + i * 1.15} C${L * 0.72} ${A * 0.14 + i * 0.5} ${L - m - i} ${A * 0.42 + i * 0.3} ${L - m - i} ${A}`;
+  const fora = useTraco(atraso, 0.9);
+  const dentro = useTraco(atraso + 0.25, 0.9);
+  const abre = reduz
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: atraso + 0.3, duration: 0.5 } }
+    : { initial: { clipPath: "inset(0% 50% 0% 50%)" }, animate: { clipPath: "inset(0% 0% 0% 0%)" }, transition: { delay: atraso + 0.55, duration: 0.95, ease: EASE } };
+  return (
+    <div style={{ width: L, position: "relative", filter: noite ? "drop-shadow(0 36px 60px rgba(0,0,0,.45))" : "drop-shadow(0 18px 30px rgba(43,33,22,.12))" }}>
+      <svg width={L} height={A} viewBox={`0 0 ${L} ${A}`} style={{ display: "block", overflow: "visible" }} aria-hidden>
+        <motion.path d={arco(0) + "Z"} fill={noite ? C.noite2 : C.marfim} stroke="none" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: atraso + 0.2, duration: 0.6 }} />
+        <motion.path d={arco(0)} fill="none" stroke={traco} strokeWidth={3} {...fora} />
+        <motion.path d={arco(11)} fill="none" stroke={noite ? C.ouroClaro : C.ouro} strokeWidth={1} {...dentro} />
+        {rotulo && (
+          <motion.text x={L / 2} y={A * 0.78} textAnchor="middle" fontSize={17} letterSpacing={4} fill={noite ? C.ouroClaro : C.ouroEscuro} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: atraso + 0.9, duration: 0.6 }}
+            style={{ textTransform: "uppercase", fontWeight: 600 }}>
+            {rotulo}
+          </motion.text>
+        )}
+      </svg>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: atraso, duration: 0.3 }}
+        style={{ borderLeft: `3px solid ${traco}`, borderRight: `3px solid ${traco}`, borderBottom: `3px solid ${traco}`, background: noite ? C.marfim : C.marfim, ...corpo }}>
+        <motion.div {...abre} style={{ position: "relative" }}>{children}</motion.div>
+      </motion.div>
+    </div>
+  );
 }
 
-/** Janela de navegador com uma tela real; aproxima o zoom do ponto de interesse e o destaca. */
-function Tela({ etapas, largura = 1150, atraso = 1.1 }: { etapas: { src: string; alt: string; foco?: Foco; zoom?: number; dura?: number }[]; largura?: number; atraso?: number }) {
-  const [fase, setFase] = useState(0);
+type Etapa = { src: string; alt: string; foco?: Foco; zoom?: number; dura?: number };
+
+/**
+ * Tela real do sistema dentro do arco. Depois que o arco abre, aproxima o ponto que está sendo
+ * falado e desenha um filete de ouro em volta dele. Com várias etapas: afasta, troca a imagem e
+ * aproxima o novo ponto. Com movimento reduzido: sem zoom, só o destaque aparecendo.
+ */
+function Tela({ etapas, largura = 1150, atraso = 1.9 }: { etapas: Etapa[]; largura?: number; atraso?: number }) {
+  const reduz = useReduz();
+  const lista = useRef(etapas).current;
+  const [img, setImg] = useState(0);
+  const [perto, setPerto] = useState(false);
+  const [chegou, setChegou] = useState(false);
+
   useEffect(() => {
-    if (etapas.length < 2) return;
-    const t = setTimeout(() => setFase((f) => Math.min(f + 1, etapas.length - 1)), (etapas[fase].dura ?? 3.2) * 1000);
-    return () => clearTimeout(t);
-  }, [fase, etapas]);
-  const e = etapas[fase];
-  const espera = fase === 0 ? atraso : 0.5;
+    const ts: ReturnType<typeof setTimeout>[] = [];
+    let t = atraso;
+    lista.forEach((e, k) => {
+      if (k > 0) {
+        ts.push(setTimeout(() => { setChegou(false); setPerto(false); }, t * 1000));
+        t += 0.8;
+        ts.push(setTimeout(() => setImg(k), t * 1000));
+        t += 0.6;
+      }
+      ts.push(setTimeout(() => setPerto(true), t * 1000));
+      t += e.dura ?? 3.6;
+    });
+    return () => ts.forEach(clearTimeout);
+  }, [lista, atraso]);
+
+  const e = lista[img];
+  const zoom = perto && !reduz && e.foco;
   // Zoom que leva o centro do foco ao centro da janela, sem deixar a imagem sair da moldura.
-  const s = e.foco ? Math.min(e.zoom ?? 1.6, 88 / e.foco.w, 88 / e.foco.h) : 1;
+  const s = zoom && e.foco ? Math.min(e.zoom ?? 1.6, 88 / e.foco.w, 88 / e.foco.h) : 1;
   const desloca = (centro: number) => Math.max(100 - 100 * s, Math.min(0, 50 - centro * s));
-  const tx = e.foco ? desloca(e.foco.x + e.foco.w / 2) : 0;
-  const ty = e.foco ? desloca(e.foco.y + e.foco.h / 2) : 0;
+  const tx = zoom && e.foco ? desloca(e.foco.x + e.foco.w / 2) : 0;
+  const ty = zoom && e.foco ? desloca(e.foco.y + e.foco.h / 2) : 0;
+  const mostrar = e.foco && (reduz ? perto : chegou);
+  // Destaque desenhado em px reais da janela (sem esticar o SVG, para o traço ficar contínuo).
+  const VW = largura - 6, VH = (VW * 10) / 16;
+  const r = e.foco && { x: ((e.foco.x * s + tx) * VW) / 100, y: ((e.foco.y * s + ty) * VH) / 100, w: (e.foco.w * s * VW) / 100, h: (e.foco.h * s * VH) / 100 };
+  const traco = useTraco(0.05, 0.75);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 70, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.9, ease: EASE, delay: 0.15 }}
-      style={{ width: largura, borderRadius: 18, overflow: "hidden", background: "#fff", boxShadow: "0 40px 90px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08)" }}
-    >
-      <div style={{ height: 40, background: "#E9E5DA", display: "flex", alignItems: "center", gap: 8, padding: "0 16px" }}>
-        {["#E0645A", "#E8B53D", "#5DB86A"].map((c) => <span key={c} style={{ width: 13, height: 13, borderRadius: 7, background: c }} />)}
-        <span style={{ marginLeft: 16, fontSize: 16, color: "#6B6F66", background: "#F7F4EC", borderRadius: 6, padding: "3px 14px" }}>agrosentinela · tela real do sistema</span>
-      </div>
+    <Arco largura={largura} rotulo="agrosentinela · tela real do sistema">
       <div style={{ position: "relative", overflow: "hidden", aspectRatio: "16 / 10" }}>
         <motion.div
-          key={e.src}
-          initial={{ opacity: fase === 0 ? 1 : 0, scale: 1, x: "0%", y: "0%" }}
-          animate={{ opacity: 1, scale: s, x: `${tx}%`, y: `${ty}%` }}
-          transition={{ opacity: { duration: 0.5 }, default: { delay: espera, duration: 1.4, ease: EASE } }}
+          animate={{ scale: s, x: `${tx}%`, y: `${ty}%` }}
+          transition={{ duration: perto ? 1.3 : 0.7, ease: EASE }}
+          onAnimationComplete={() => perto && setChegou(true)}
           style={{ position: "absolute", inset: 0, transformOrigin: "0% 0%" }}
         >
-          <Imagem src={e.src} alt={e.alt} />
-          {e.foco && (
-            <motion.div
-              initial={{ opacity: 0, scale: 1.25 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: espera + 1.1, duration: 0.5, ease: EASE }}
-              style={{ position: "absolute", left: `${e.foco.x}%`, top: `${e.foco.y}%`, width: `${e.foco.w}%`, height: `${e.foco.h}%`, border: `3px solid ${C.amber}`, borderRadius: 10, boxShadow: "0 0 0 4000px rgba(16,36,27,.32)" }}
-            />
-          )}
+          {lista.map((x, k) => (
+            <motion.img key={x.src} src={x.src} alt={k === img ? x.alt : ""} draggable={false} initial={false} animate={{ opacity: k === img ? 1 : 0 }} transition={{ duration: 0.5 }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          ))}
         </motion.div>
+        <AnimatePresence>
+          {mostrar && r && (
+            <motion.svg key={img} viewBox={`0 0 ${VW} ${VH}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.4 }}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} aria-hidden>
+              <path d={`M0 0H${VW}V${VH}H0Z M${r.x} ${r.y}h${r.w}v${r.h}h${-r.w}Z`} fillRule="evenodd" fill="rgba(14,21,40,.45)" />
+              <motion.rect x={r.x} y={r.y} width={r.w} height={r.h} rx={8} fill="none" stroke={C.ouro} strokeWidth={4} {...traco} />
+            </motion.svg>
+          )}
+        </AnimatePresence>
       </div>
-    </motion.div>
+    </Arco>
+  );
+}
+
+function Rodape({ tema = "noite" }: { tema?: Tema }) {
+  return (
+    <p style={{ position: "absolute", left: 128, bottom: 60, fontSize: 22, color: tema === "noite" ? C.nevoa : C.tintaSuave, margin: 0 }}>
+      Tela real do sistema · base simulada da demonstração, identificada no app
+    </p>
   );
 }
 
 /** Slide de "momento da demo": número grande à esquerda, tela real à direita. */
-function Momento({ n, numero, legenda, etapas, tamanho = 170 }: { n: number; numero: ReactNode; legenda: ReactNode; etapas: Parameters<typeof Tela>[0]["etapas"]; tamanho?: number }) {
+function Momento({ n, numero, legenda, etapas, tamanho = 170 }: { n: number; numero: ReactNode; legenda: ReactNode; etapas: Etapa[]; tamanho?: number }) {
   return (
-    <Base fundo={`radial-gradient(circle at 75% 50%, ${C.dark2}, ${C.dark} 70%)`}>
-      <div style={{ position: "absolute", left: 128, top: 128, width: 470, display: "flex", flexDirection: "column", gap: 28 }}>
+    <Base>
+      <div style={{ position: "absolute", left: 128, top: 128, width: 470, display: "flex", flexDirection: "column", gap: 26 }}>
         <Entra><Rotulo>Demo · momento {n} de 4</Rotulo></Entra>
         <Entra atraso={0.15}>
-          <div style={{ fontFamily: DISPLAY, fontSize: tamanho, fontWeight: 700, lineHeight: 1, color: C.amber, whiteSpace: "nowrap" }}>{numero}</div>
+          <div style={{ fontFamily: TITULO, fontSize: tamanho, fontWeight: 700, lineHeight: 1, color: C.ouro, whiteSpace: "nowrap", ...NUMEROS }}>{numero}</div>
         </Entra>
-        <Entra atraso={0.5}><p style={{ fontSize: 34, lineHeight: 1.4, color: C.light, margin: 0 }}>{legenda}</p></Entra>
+        <Filete largura={300} atraso={0.45} />
+        <Entra atraso={0.6}><p style={{ fontSize: 34, lineHeight: 1.4, color: C.marfim, margin: 0 }}>{legenda}</p></Entra>
       </div>
-      <div style={{ position: "absolute", right: 128, top: 150 }}>
+      <div style={{ position: "absolute", right: 128, top: 140 }}>
         <Tela etapas={etapas} />
       </div>
-      <p style={{ position: "absolute", left: 128, bottom: 56, fontSize: 22, color: "rgba(195,211,199,.75)", margin: 0 }}>Tela real do sistema · base simulada da demonstração, identificada no app</p>
+      <Rodape />
     </Base>
   );
 }
 
-function Icone({ tipo, cor = C.amber, tam = 56 }: { tipo: "gota" | "relogio" | "duplo" | "check" | "broto" | "seta"; cor?: string; tam?: number }) {
-  const p = { fill: "none", stroke: cor, strokeWidth: 2.4, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+function Icone({ tipo, cor = C.ouro, tam = 56 }: { tipo: "gota" | "relogio" | "duplo" | "check" | "broto" | "seta"; cor?: string; tam?: number }) {
+  const p = { fill: "none", stroke: cor, strokeWidth: 2.2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
   return (
     <svg width={tam} height={tam} viewBox="0 0 24 24" aria-hidden>
       {tipo === "gota" && <path {...p} d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />}
@@ -143,32 +305,75 @@ function Icone({ tipo, cor = C.amber, tam = 56 }: { tipo: "gota" | "relogio" | "
   );
 }
 
+/** Medalhão: círculo com aro de ouro que se desenha. */
+function Medalhao({ tam = 96, atraso = 0, fundo = C.noite, aro = C.ouro, children }: { tam?: number; atraso?: number; fundo?: string; aro?: string; children: ReactNode }) {
+  const traco = useTraco(atraso, 0.7);
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: atraso, duration: 0.5, ease: EASE }}
+      style={{ position: "relative", width: tam, height: tam, flexShrink: 0 }}>
+      <div style={{ position: "absolute", inset: 5, borderRadius: "50%", background: fundo, display: "flex", alignItems: "center", justifyContent: "center" }}>{children}</div>
+      <svg width={tam} height={tam} viewBox={`0 0 ${tam} ${tam}`} style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }} aria-hidden>
+        <motion.circle cx={tam / 2} cy={tam / 2} r={tam / 2 - 2} fill="none" stroke={aro} strokeWidth={2.5} {...traco} />
+      </svg>
+    </motion.div>
+  );
+}
+
+/** Emblema da capa: arco ogival em ultramarino com filete de ouro, estrela e broto que cresce. */
+function Emblema() {
+  const reduz = useReduz();
+  const arco = useTraco(0.5, 1.3);
+  const interno = useTraco(0.8, 1.2);
+  const caule = useTraco(1.6, 0.8);
+  const chao = useTraco(1.4, 0.8);
+  return (
+    <svg width={380} height={470} viewBox="0 0 36 44" aria-hidden style={{ overflow: "visible", filter: "drop-shadow(0 30px 50px rgba(0,0,0,.5))" }}>
+      <motion.path d="M2 43V20C2 10 10 3 18 1c8 2 16 9 16 19v23Z" fill={C.ultramar} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7, duration: 0.8 }} />
+      <motion.path d="M2 43V20C2 10 10 3 18 1c8 2 16 9 16 19v23Z" fill="none" stroke={C.ouro} strokeWidth={0.7} {...arco} />
+      <motion.path d="M5.5 40V20.5C5.5 12.5 11.5 6.8 18 5c6.5 1.8 12.5 7.5 12.5 15.5V40Z" fill="none" stroke={C.ouroClaro} strokeWidth={0.3} {...interno} />
+      <motion.path d="m18 9.2 1 2.2 2.3.2-1.8 1.5.6 2.3-2.1-1.3-2.1 1.3.6-2.3-1.8-1.5 2.3-.2Z" fill={C.ouroClaro}
+        initial={{ opacity: 0, scale: reduz ? 1 : 0.2 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.3, duration: 0.6, ease: EASE }} style={{ transformOrigin: "18px 12.5px" }} />
+      <motion.path d="M8 38h20" stroke={C.ouroClaro} strokeWidth={0.5} fill="none" {...chao} />
+      <motion.path d="M18 38V24" stroke={C.verdeClaro} strokeWidth={1.4} strokeLinecap="round" fill="none" {...caule} />
+      <motion.path d="M18 30c-5 0-7.5-3-7.5-6.5 4.5 0 7.5 2.5 7.5 6.5Z" fill={C.verdeClaro} initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.1, duration: 0.6, ease: EASE }} style={{ transformOrigin: "18px 30px" }} />
+      <motion.path d="M18 27.5c4.5 0 7-2.8 7-6-4 0-7 2.3-7 6Z" fill={C.verdeClaro} initial={{ opacity: 0, scale: 0.3 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.3, duration: 0.6, ease: EASE }} style={{ transformOrigin: "18px 27.5px" }} />
+    </svg>
+  );
+}
+
+/** Palavra que entra (usada nos títulos grandes). */
+function Palavras({ texto, base, passo = 0.11 }: { texto: string; base: number; passo?: number }) {
+  return (
+    <>
+      {texto.split(" ").map((p, k) => (
+        <motion.span key={k} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: base + k * passo, duration: 0.55, ease: EASE }} style={{ display: "inline-block", marginRight: "0.25em" }}>{p}</motion.span>
+      ))}
+    </>
+  );
+}
+
 // ---------- slides ----------
 
 function Capa() {
-  const nome = "AgroSentinela".split("");
+  const resto = "groSentinela".split("");
   return (
-    <Base fundo={`radial-gradient(circle at 78% 45%, #24503A, ${C.dark} 62%)`}>
-      {/* radar: a sentinela vigiando */}
-      <div style={{ position: "absolute", left: 1260, top: 230, width: 520, height: 520 }}>
-        {[0, 1, 2].map((k) => (
-          <motion.div key={k} initial={{ scale: 0.4, opacity: 0.7 }} animate={{ scale: 1.35, opacity: 0 }} transition={{ duration: 3.2, repeat: Infinity, delay: k * 1.05, ease: "easeOut" }}
-            style={{ position: "absolute", inset: 0, borderRadius: "50%", border: `3px solid ${C.greenLight}` }} />
-        ))}
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.9, type: "spring", stiffness: 160, damping: 14 }}
-          style={{ position: "absolute", left: 160, top: 160, width: 200, height: 200, borderRadius: "50%", background: C.green, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 80px ${C.green}` }}>
-          <Icone tipo="broto" tam={120} cor={C.amber} />
-        </motion.div>
+    <Base>
+      <div style={{ position: "absolute", left: 1370, top: 210 }}>
+        <Emblema />
       </div>
       <Entra><Rotulo>AGROHACK 2026/2 · Equipe 3 Hacketeers</Rotulo></Entra>
-      <h1 style={{ fontFamily: DISPLAY, fontSize: 176, fontWeight: 700, lineHeight: 1.1, color: C.light, margin: "36px 0 0" }}>
-        {nome.map((l, k) => (
-          <motion.span key={k} initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + k * 0.045, duration: 0.6, ease: EASE }} style={{ display: "inline-block" }}>{l}</motion.span>
-        ))}
+      <h1 aria-label="AgroSentinela" style={{ display: "flex", alignItems: "flex-end", gap: 6, fontFamily: TITULO, fontSize: 168, fontWeight: 600, lineHeight: 1, color: C.marfim, margin: "48px 0 0" }}>
+        <Capitular letra="A" tam={184} atraso={0.15} />
+        <span aria-hidden style={{ paddingBottom: 10 }}>
+          {resto.map((l, k) => (
+            <motion.span key={k} initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 + k * 0.04, duration: 0.6, ease: EASE }} style={{ display: "inline-block" }}>{l}</motion.span>
+          ))}
+        </span>
       </h1>
-      <Entra atraso={1.0}><p style={{ fontFamily: DISPLAY, fontSize: 64, color: C.amber, margin: "18px 0 0" }}>O agrônomo de bolso do estoque.</p></Entra>
-      <Entra atraso={1.35}><p style={{ fontSize: 36, lineHeight: 1.45, color: C.soft, width: 1000, margin: "28px 0 0" }}>Lê a planilha que a fazenda já tem e diz <b style={{ color: C.light }}>o que fazer hoje</b>, <b style={{ color: C.light }}>por quê</b> e <b style={{ color: C.light }}>quanto dá para confiar</b>.</p></Entra>
-      <p style={{ position: "absolute", left: 128, bottom: 64, fontSize: 24, color: "#8FA697", margin: 0 }}>IFRO Campus Ariquemes · SNCT · 29/10/2026</p>
+      <Filete largura={1150} atraso={1.1} style={{ marginTop: 34 }} />
+      <Entra atraso={1.35}><p style={{ fontFamily: TITULO, fontSize: 62, fontWeight: 500, color: C.ouroClaro, margin: "26px 0 0" }}>O agrônomo de bolso do estoque.</p></Entra>
+      <Entra atraso={1.7}><p style={{ fontSize: 36, lineHeight: 1.45, color: C.nevoa, width: 1050, margin: "22px 0 0" }}>Lê a planilha que a fazenda já tem e diz <b style={{ color: C.marfim }}>o que fazer hoje</b>, <b style={{ color: C.marfim }}>por quê</b> e <b style={{ color: C.marfim }}>quanto dá para confiar</b>.</p></Entra>
+      <p style={{ position: "absolute", left: 128, bottom: 70, fontSize: 24, color: C.nevoa, margin: 0 }}>IFRO Campus Ariquemes · SNCT · 29/10/2026</p>
     </Base>
   );
 }
@@ -180,17 +385,20 @@ function Dor() {
     ["duplo", "Adubo com dois nomes", "“KCl” e “Cloreto de potássio”: a fazenda compra de novo o que já tinha."],
   ];
   return (
-    <Base fundo={C.light}>
-      <Entra><Rotulo cor={C.green}>O problema</Rotulo></Entra>
-      <Entra atraso={0.15} style={{ marginTop: 24 }}><Titulo cor={C.dark} tamanho={80}>O Seu João sabe quanto tem.<br /><span style={{ color: C.crit }}>Não sabe o que vai dar problema.</span></Titulo></Entra>
-      <div style={{ display: "flex", gap: 40, marginTop: 80 }}>
+    <Base tema="pergaminho">
+      <Entra><Rotulo tema="pergaminho">O problema</Rotulo></Entra>
+      <Entra atraso={0.15} style={{ marginTop: 24 }}><Titulo cor={C.tinta} tamanho={80}>O Seu João sabe quanto tem.<br /><span style={{ color: C.cinabre }}>Não sabe o que vai dar problema.</span></Titulo></Entra>
+      <div style={{ display: "flex", gap: 40, marginTop: 60 }}>
         {cards.map(([ic, t, d], k) => (
-          <motion.div key={t} initial={{ opacity: 0, y: 60, rotate: -1.5 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ delay: 0.7 + k * 0.35, duration: 0.7, ease: EASE }}
-            style={{ flex: 1, background: C.card, border: "1px solid #E2DCCB", borderRadius: 24, padding: 44, display: "flex", flexDirection: "column", gap: 20, boxShadow: "0 18px 40px rgba(16,36,27,.08)" }}>
-            <div style={{ width: 88, height: 88, borderRadius: 20, background: C.dark, display: "flex", alignItems: "center", justifyContent: "center" }}><Icone tipo={ic} /></div>
-            <h3 style={{ fontFamily: DISPLAY, fontSize: 46, fontWeight: 600, color: C.dark, margin: 0, lineHeight: 1.15 }}>{t}</h3>
-            <p style={{ fontSize: 30, lineHeight: 1.4, color: C.softL, margin: 0 }}>{d}</p>
-          </motion.div>
+          <Entra key={t} atraso={0.7 + k * 0.45} y={40}>
+            <Arco largura={528} alturaArco={64} atraso={0.7 + k * 0.45} tema="pergaminho" corpo={{ minHeight: 360 }}>
+              <div style={{ padding: "8px 40px 40px", display: "flex", flexDirection: "column", gap: 18 }}>
+                <Medalhao tam={92} atraso={1.1 + k * 0.45}><Icone tipo={ic} tam={48} /></Medalhao>
+                <h3 style={{ fontFamily: TITULO, fontSize: 46, fontWeight: 600, color: C.tinta, margin: 0, lineHeight: 1.12 }}>{t}</h3>
+                <p style={{ fontSize: 30, lineHeight: 1.4, color: C.tintaSuave, margin: 0 }}>{d}</p>
+              </div>
+            </Arco>
+          </Entra>
         ))}
       </div>
     </Base>
@@ -198,16 +406,18 @@ function Dor() {
 }
 
 function Frase() {
-  const linha = (txt: string, base: number) =>
-    txt.split(" ").map((p, k) => (
-      <motion.span key={k} initial={{ opacity: 0, y: 40, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} transition={{ delay: base + k * 0.12, duration: 0.5 }} style={{ display: "inline-block", marginRight: "0.25em" }}>{p}</motion.span>
-    ));
   return (
-    <Base fundo={C.amber}>
-      <div style={{ position: "absolute", left: 128, right: 128, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 36 }}>
-        <p style={{ fontFamily: DISPLAY, fontSize: 104, fontWeight: 500, color: "rgba(16,36,27,.6)", margin: 0, lineHeight: 1.1 }}>{linha("Não é falta de dado.", 0.2)}</p>
-        <p style={{ fontFamily: DISPLAY, fontSize: 104, fontWeight: 700, color: C.dark, margin: 0, lineHeight: 1.1 }}>{linha("É falta de alguém olhando os dados por ele.", 1.1)}</p>
-        <Entra atraso={2.4}><p style={{ fontSize: 34, color: C.dark, margin: 0 }}>A planilha guarda o passado. Ninguém tem tempo de ler o futuro nela.</p></Entra>
+    <Base tema="pergaminho">
+      <div style={{ position: "absolute", left: 128, right: 128, top: 0, bottom: 0, display: "flex", flexDirection: "column", justifyContent: "center", gap: 30 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+          <Capitular letra="N" tam={132} atraso={0.1} cor={C.ouroClaro} style={{ marginBottom: 14 }} />
+          <p aria-label="Não é falta de dado." style={{ fontFamily: TITULO, fontSize: 104, fontWeight: 500, color: C.tintaSuave, margin: 0, lineHeight: 1.1 }}>
+            <span aria-hidden><Palavras texto="ão é falta de dado." base={0.5} /></span>
+          </p>
+        </div>
+        <p style={{ fontFamily: TITULO, fontSize: 104, fontWeight: 700, color: C.tinta, margin: 0, lineHeight: 1.1 }}><Palavras texto="É falta de alguém olhando os dados por ele." base={1.2} /></p>
+        <Filete largura={1664} atraso={2.3} cor={C.ouroEscuro} />
+        <Entra atraso={2.7}><p style={{ fontSize: 34, color: C.tinta, margin: 0 }}>A planilha guarda o passado. Ninguém tem tempo de ler o futuro nela.</p></Entra>
       </div>
     </Base>
   );
@@ -220,83 +430,84 @@ function Ideia() {
     ["Quanto confiar", "Alta: 15 retiradas na janela e 376 dias de histórico. A conta fica à vista."],
   ];
   return (
-    <Base fundo={C.dark}>
+    <Base>
       <Entra><Rotulo>A ideia</Rotulo></Entra>
       <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo tamanho={88}>O agrônomo de bolso do estoque</Titulo></Entra>
-      <Entra atraso={0.35}><p style={{ fontSize: 34, color: C.soft, margin: "20px 0 0", width: 1500 }}>Ele lê os registros que a fazenda já tem e entrega <b style={{ color: C.light }}>uma lista do que fazer hoje</b>, em ordem de prioridade. Cada alerta responde três perguntas:</p></Entra>
-      <div style={{ position: "absolute", left: 128, top: 470, width: 700, display: "flex", flexDirection: "column", gap: 26 }}>
+      <Entra atraso={0.35}><p style={{ fontSize: 34, lineHeight: 1.4, color: C.nevoa, margin: "20px 0 0", width: 940 }}>Ele lê os registros que a fazenda já tem e entrega <b style={{ color: C.marfim }}>uma lista do que fazer hoje</b>, em ordem de prioridade. Cada alerta responde três perguntas:</p></Entra>
+      <div style={{ position: "absolute", left: 128, top: 500, width: 900, display: "flex", flexDirection: "column", gap: 24 }}>
         {pilares.map(([t, d], k) => (
-          <motion.div key={t} initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 + k * 0.45, duration: 0.6, ease: EASE }}
-            style={{ display: "flex", gap: 24, alignItems: "flex-start", background: C.dark2, borderRadius: 18, padding: "24px 28px", borderLeft: `6px solid ${C.amber}` }}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 52, fontWeight: 700, color: C.amber, lineHeight: 1, minWidth: 40 }}>{k + 1}</div>
+          <motion.div key={t} initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.0 + k * 0.5, duration: 0.6, ease: EASE }}
+            style={{ display: "flex", gap: 26, alignItems: "center", background: "rgba(26,38,80,.85)", padding: "20px 28px", borderLeft: `5px solid ${C.ouro}`, boxShadow: "inset 0 0 0 1px rgba(212,175,90,.25)" }}>
+            <div style={{ fontFamily: TITULO, fontSize: 62, fontWeight: 700, color: C.cinabreClaro, lineHeight: 1, minWidth: 40, ...NUMEROS }}>{k + 1}</div>
             <div>
-              <div style={{ fontFamily: DISPLAY, fontSize: 38, color: C.light, fontWeight: 600 }}>{t}</div>
-              <div style={{ fontSize: 26, color: C.soft, lineHeight: 1.4, marginTop: 6 }}>{d}</div>
+              <div style={{ fontFamily: TITULO, fontSize: 40, color: C.marfim, fontWeight: 600 }}>{t}</div>
+              <div style={{ fontSize: 26, color: C.nevoa, lineHeight: 1.4, marginTop: 4 }}>{d}</div>
             </div>
           </motion.div>
         ))}
       </div>
-      <motion.div initial={{ opacity: 0, y: 60, rotate: 2 }} animate={{ opacity: 1, y: 0, rotate: 0 }} transition={{ delay: 0.6, duration: 0.9, ease: EASE }}
-        style={{ position: "absolute", left: 900, top: 450, width: 892, borderRadius: 18, overflow: "hidden", boxShadow: "0 40px 90px rgba(0,0,0,.5)" }}>
-        <motion.div animate={{ y: [0, -10, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
+      <div style={{ position: "absolute", left: 1152, top: 400 }}>
+        <Arco largura={640} alturaArco={74} atraso={0.6}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/pitch/alerta-diesel-metodo.png" alt="Alerta real do sistema: Óleo diesel S10, estoque crítico, com critério e confiança" style={{ width: "100%", display: "block" }} />
-        </motion.div>
-      </motion.div>
+        </Arco>
+      </div>
     </Base>
   );
 }
 
 function Painel() {
+  const niveis: [string, string, string][] = [["Crítico", C.cinabreClaro, "agir hoje"], ["Atenção", C.ocreClaro, "agir nesta semana"], ["Monitorar", C.azulClaro, "acompanhar"]];
   return (
-    <Base fundo={`radial-gradient(circle at 75% 50%, ${C.dark2}, ${C.dark} 70%)`}>
-      <div style={{ position: "absolute", left: 128, top: 128, width: 470, display: "flex", flexDirection: "column", gap: 28 }}>
+    <Base>
+      <div style={{ position: "absolute", left: 128, top: 128, width: 470, display: "flex", flexDirection: "column", gap: 26 }}>
         <Entra><Rotulo>O produto</Rotulo></Entra>
-        <Entra atraso={0.15}><Titulo tamanho={72}>Painel do dia</Titulo></Entra>
-        <Entra atraso={0.4}><p style={{ fontSize: 32, lineHeight: 1.45, color: C.soft, margin: 0 }}>Não é mais um cadastro com gráfico bonito. É <b style={{ color: C.light }}>apoio à decisão</b>: do mais urgente ao menos urgente, com o que fazer e quanto custa.</p></Entra>
-        <Entra atraso={0.7}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            {[["Crítico", C.crit, "agir hoje"], ["Atenção", "#B7791F", "agir nesta semana"], ["Monitorar", "#3B6EA8", "acompanhar"]].map(([n, cor, d]) => (
-              <div key={n} style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 28, color: C.light }}>
-                <span style={{ width: 18, height: 18, borderRadius: 9, background: cor }} /><b>{n}</b><span style={{ color: C.soft }}>· {d}</span>
+        <Entra atraso={0.15}><Titulo tamanho={76}>Painel do dia</Titulo></Entra>
+        <Filete largura={300} atraso={0.35} />
+        <Entra atraso={0.5}><p style={{ fontSize: 32, lineHeight: 1.45, color: C.nevoa, margin: 0 }}>Não é mais um cadastro com gráfico bonito. É <b style={{ color: C.marfim }}>apoio à decisão</b>: do mais urgente ao menos urgente, com o que fazer e quanto custa.</p></Entra>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {niveis.map(([n, cor, d], k) => (
+            <Entra key={n} atraso={0.9 + k * 0.25} y={14}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 28, color: C.marfim }}>
+                <Losango cor={cor} tam={16} /><b style={{ color: cor }}>{n}</b><span style={{ color: C.nevoa }}>· {d}</span>
               </div>
-            ))}
-          </div>
-        </Entra>
+            </Entra>
+          ))}
+        </div>
       </div>
-      <div style={{ position: "absolute", right: 128, top: 150 }}>
-        <Tela etapas={[{ src: "/pitch/painel.png", alt: "Painel do dia real do sistema", foco: { x: 57.6, y: 67.4, w: 34, h: 24.6 }, zoom: 1.75 }]} atraso={1.6} />
+      <div style={{ position: "absolute", right: 128, top: 140 }}>
+        <Tela etapas={[{ src: "/pitch/painel.png", alt: "Painel do dia real do sistema", foco: FOCOS.painel, zoom: 1.75 }]} atraso={2.2} />
       </div>
-      <p style={{ position: "absolute", left: 128, bottom: 56, fontSize: 22, color: "rgba(195,211,199,.75)", margin: 0 }}>Tela real do sistema · base simulada da demonstração, identificada no app</p>
+      <Rodape />
     </Base>
   );
 }
 
 const Momento1 = () => (
   <Momento n={1} numero={<><Contador ate={9} /> dias</>}
-    legenda={<>é quanto o diesel dura no ritmo atual. O prazo de compra é de 15 dias: <b style={{ color: C.amber }}>já passou da hora de comprar.</b></>}
-    etapas={[{ src: "/pitch/diesel.png", alt: "Ficha do óleo diesel S10", foco: { x: 57.6, y: 14.2, w: 11.2, h: 10.8 }, zoom: 2.1 }]} />
+    legenda={<>é quanto o diesel dura no ritmo atual. O prazo de compra é de 15 dias: <b style={{ color: C.ouroClaro }}>já passou da hora de comprar.</b></>}
+    etapas={[{ src: "/pitch/diesel.png", alt: "Ficha do óleo diesel S10", foco: FOCOS.diesel, zoom: 2.1 }]} />
 );
 
 const Momento2 = () => (
   <Momento n={2} numero={<><Contador ate={87} prefixo="+" sufixo="%" /></>}
-    legenda={<>de consumo de diesel em 4 meses. <b style={{ color: C.amber }}>Quem olhasse a média do ano acharia que está tudo bem.</b></>}
-    etapas={[{ src: "/pitch/diesel-graficos.png", alt: "Gráfico de consumo semanal do diesel subindo", foco: { x: 57.8, y: 20.6, w: 34, h: 36.2 }, zoom: 1.65 }]} />
+    legenda={<>de consumo de diesel em 4 meses. <b style={{ color: C.ouroClaro }}>Quem olhasse a média do ano acharia que está tudo bem.</b></>}
+    etapas={[{ src: "/pitch/diesel-graficos.png", alt: "Gráfico de consumo semanal do diesel subindo", foco: FOCOS["diesel-graficos"], zoom: 1.65 }]} />
 );
 
 const Momento3 = () => (
   <Momento n={3} numero="1 clique" tamanho={130}
-    legenda={<>“KCl” e “Cloreto de potássio” eram o mesmo adubo. Unificou, a análise foi refeita e <b style={{ color: C.amber }}>o alarme falso sumiu sozinho.</b></>}
+    legenda={<>“KCl” e “Cloreto de potássio” eram o mesmo adubo. Unificou, a análise foi refeita e <b style={{ color: C.ouroClaro }}>o alarme falso sumiu sozinho.</b></>}
     etapas={[
-      { src: "/pitch/cadastros.png", alt: "Sugestão de cadastro duplicado KCl", foco: { x: 57.8, y: 15.6, w: 34, h: 23 }, zoom: 1.7, dura: 3.6 },
-      { src: "/pitch/cadastros-unificado.png", alt: "Aviso de alertas resolvidos após unificar", foco: { x: 73.2, y: 85.8, w: 25.6, h: 12.8 }, zoom: 1.3 },
+      { src: "/pitch/cadastros.png", alt: "Sugestão de cadastro duplicado KCl", foco: FOCOS.cadastros, zoom: 1.7, dura: 3.6 },
+      { src: "/pitch/cadastros-unificado.png", alt: "Aviso de alertas resolvidos após unificar", foco: FOCOS["cadastros-unificado"], zoom: 1.5 },
     ]} />
 );
 
 const Momento4 = () => (
-  <Momento n={4} numero={<><Contador ate={300} dur={1.2} /> L</>}
-    legenda={<>de glifosato retirados de uma vez. Salvou, o sistema refez tudo e <b style={{ color: C.amber }}>avisou na hora: Novo · Crítico.</b></>}
-    etapas={[{ src: "/pitch/registrar-novo.png", alt: "Aviso de novo alerta crítico após registrar retirada", foco: { x: 72.9, y: 88.2, w: 26, h: 10.4 }, zoom: 1.3 }]} />
+  <Momento n={4} numero={<><Contador ate={170} dur={1.2} /> L</>}
+    legenda={<>de glifosato retirados de uma vez. Salvou, o sistema refez tudo e <b style={{ color: C.ouroClaro }}>avisou na hora: Novo · Atenção · Vai faltar em breve.</b></>}
+    etapas={[{ src: "/pitch/registrar-novo.png", alt: "Aviso de novo alerta de atenção após registrar retirada", foco: FOCOS["registrar-novo"], zoom: 1.5 }]} />
 );
 
 function Perguntas() {
@@ -310,51 +521,63 @@ function Perguntas() {
     ["Quais itens merecem atenção imediata?", "Painel do dia, com prioridade"],
   ];
   return (
-    <Base fundo={C.light}>
-      <Entra><Rotulo cor={C.green}>Aderência ao desafio</Rotulo></Entra>
-      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo cor={C.dark} tamanho={72}>As 7 perguntas do desafio, respondidas</Titulo></Entra>
-      <div style={{ marginTop: 48, display: "flex", flexDirection: "column", gap: 12 }}>
+    <Base tema="pergaminho">
+      <Entra><Rotulo tema="pergaminho">Aderência ao desafio</Rotulo></Entra>
+      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo cor={C.tinta} tamanho={72}>As 7 perguntas do desafio, respondidas</Titulo></Entra>
+      <Filete largura={1664} atraso={0.35} cor={C.ouroEscuro} style={{ marginTop: 22 }} />
+      <div style={{ marginTop: 26, display: "flex", flexDirection: "column", gap: 12 }}>
         {linhas.map(([q, r], k) => (
-          <motion.div key={q} initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 + k * 0.22, duration: 0.5, ease: EASE }}
-            style={{ display: "flex", alignItems: "center", gap: 24, background: C.card, border: "1px solid #E2DCCB", borderRadius: 14, padding: "14px 24px" }}>
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.8 + k * 0.22, type: "spring", stiffness: 300, damping: 15 }}
-              style={{ width: 52, height: 52, borderRadius: 26, background: C.green, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <Icone tipo="check" cor="#fff" tam={32} />
-            </motion.div>
-            <div style={{ flex: 1, fontSize: 29, color: C.dark, fontWeight: 500 }}>{q}</div>
-            <div style={{ width: 690, fontSize: 26, color: C.green, fontWeight: 700 }}>{r}</div>
-          </motion.div>
+          <Linha key={q} q={q} r={r} atraso={0.6 + k * 0.24} />
         ))}
       </div>
     </Base>
   );
 }
 
+function Linha({ q, r, atraso }: { q: string; r: string; atraso: number }) {
+  const traco = useTraco(atraso + 0.3, 0.45);
+  return (
+    <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: atraso, duration: 0.5, ease: EASE }}
+      style={{ display: "flex", alignItems: "center", gap: 24, background: C.marfim, border: `1px solid ${C.borda}`, borderLeft: `4px solid ${C.ouro}`, padding: "12px 24px" }}>
+      <Medalhao tam={54} atraso={atraso + 0.05} fundo={C.verde} aro={C.ouroEscuro}>
+        <svg width={30} height={30} viewBox="0 0 24 24" aria-hidden>
+          <motion.path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke={C.marfim} strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" {...traco} />
+        </svg>
+      </Medalhao>
+      <div style={{ flex: 1, fontSize: 29, color: C.tinta, fontWeight: 500 }}>{q}</div>
+      <div style={{ width: 690, fontSize: 26, color: C.verde, fontWeight: 700 }}>{r}</div>
+    </motion.div>
+  );
+}
+
 function Confianca() {
   const passos = ["Plantamos problemas e um gabarito", "Rodamos o motor", "Medimos acertos e alarmes falsos", "Ajustamos a regra"];
   const R = 250;
+  const centro = R + 80;
+  const roda = useTraco(0.7, 2.2);
   return (
-    <Base fundo={C.dark}>
+    <Base>
       <Entra><Rotulo>Por que confiar</Rotulo></Entra>
-      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo tamanho={72}>Método, não chute</Titulo></Entra>
-      <div style={{ position: "absolute", left: 128, top: 360, width: 760 }}>
-        <div style={{ fontFamily: DISPLAY, fontSize: 230, fontWeight: 700, color: C.amber, lineHeight: 1 }}><Contador ate={17} atraso={0.5} />/17</div>
-        <Entra atraso={0.9}><p style={{ fontSize: 34, color: C.light, lineHeight: 1.4, margin: "16px 0 0" }}>problemas escondidos de propósito numa base de teste. <b>O sistema encontrou todos</b>, e repetimos em 10 bases diferentes para não “decorar” uma só.</p></Entra>
-        <Entra atraso={1.5}><p style={{ fontSize: 26, color: C.soft, lineHeight: 1.45, margin: "28px 0 0", borderLeft: `4px solid ${C.green}`, paddingLeft: 20 }}>Honestidade: fomos nós que criamos essa base. Ela prova que cada regra faz o que diz; a prova no mundo real vem da base oficial e da validação com quem é do campo.</p></Entra>
+      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo tamanho={76}>Método, não chute</Titulo></Entra>
+      <div style={{ position: "absolute", left: 128, top: 350, width: 790 }}>
+        <div style={{ fontFamily: TITULO, fontSize: 230, fontWeight: 700, color: C.ouro, lineHeight: 1, ...NUMEROS }}><Contador ate={17} atraso={0.5} />/17</div>
+        <Entra atraso={0.9}><p style={{ fontSize: 34, color: C.marfim, lineHeight: 1.4, margin: "16px 0 0" }}>problemas escondidos de propósito numa base de teste. <b>O sistema encontrou todos</b>, e repetimos em 10 bases diferentes para não “decorar” uma só.</p></Entra>
+        <Entra atraso={1.5}><p style={{ fontSize: 26, color: C.nevoa, lineHeight: 1.45, margin: "28px 0 0", borderLeft: `4px solid ${C.ouro}`, paddingLeft: 20 }}>Honestidade: fomos nós que criamos essa base. Ela prova que cada regra faz o que diz; a prova no mundo real vem da base oficial e da validação com quem é do campo.</p></Entra>
       </div>
-      {/* Loop Engineering */}
-      <div style={{ position: "absolute", left: 1060, top: 300, width: 2 * R + 160, height: 2 * R + 160 }}>
-        <motion.svg width={2 * R + 160} height={2 * R + 160} style={{ position: "absolute", inset: 0 }} animate={{ rotate: 360 }} transition={{ duration: 22, repeat: Infinity, ease: "linear" }}>
-          <circle cx={R + 80} cy={R + 80} r={R} fill="none" stroke={C.green} strokeWidth="6" strokeDasharray="18 16" />
-        </motion.svg>
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.6, type: "spring" }} style={{ position: "absolute", left: R + 80 - 110, top: R + 80 - 60, width: 220, textAlign: "center", fontFamily: DISPLAY, fontSize: 40, color: C.amber, lineHeight: 1.1 }}>Loop de<br />avaliação</motion.div>
+      {/* Loop de avaliação: o círculo se desenha uma vez e para */}
+      <div style={{ position: "absolute", left: 1060, top: 300, width: 2 * centro, height: 2 * centro }}>
+        <svg width={2 * centro} height={2 * centro} style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }} aria-hidden>
+          <circle cx={centro} cy={centro} r={R} fill="none" stroke="rgba(212,175,90,.18)" strokeWidth={14} />
+          <motion.circle cx={centro} cy={centro} r={R} fill="none" stroke={C.ouro} strokeWidth={3} {...roda} />
+        </svg>
+        <Entra atraso={0.6} y={0} style={{ position: "absolute", left: centro - 120, top: centro - 60, width: 240, textAlign: "center", fontFamily: TITULO, fontSize: 46, fontWeight: 600, color: C.ouroClaro, lineHeight: 1.05 }}>Loop de<br />avaliação</Entra>
         {passos.map((p, k) => {
           const ang = (-90 + k * 90) * (Math.PI / 180);
-          const x = R + 80 + R * Math.cos(ang);
-          const y = R + 80 + R * Math.sin(ang);
+          const x = centro + R * Math.cos(ang);
+          const y = centro + R * Math.sin(ang);
           return (
-            <motion.div key={p} initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.9 + k * 0.4, duration: 0.5, ease: EASE }}
-              style={{ position: "absolute", left: x - 130, top: y - 50, width: 260, minHeight: 100, background: C.dark2, border: `2px solid ${C.greenLight}`, borderRadius: 16, padding: "14px 16px", fontSize: 24, color: C.light, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600 }}>
+            <motion.div key={p} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.9 + k * 0.5, duration: 0.5, ease: EASE }}
+              style={{ position: "absolute", left: x - 135, top: y - 52, width: 270, minHeight: 104, background: C.noite2, border: `2px solid ${C.ouro}`, padding: "14px 16px", fontSize: 25, color: C.marfim, textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, boxShadow: "0 12px 30px rgba(0,0,0,.35)" }}>
               {p}
             </motion.div>
           );
@@ -376,29 +599,33 @@ function Motor() {
   const detectores = ["Estoque crítico", "Vai faltar em breve", "Consumo em alta", "Retirada fora do padrão", "Vencimento por lote", "Excesso", "Variação de preço", "Dinheiro parado", "Cadastro duplicado", "Qualidade dos dados"];
   const larg = 240;
   const passo = (1664 - larg) / 5;
+  const linha = useTraco(0.5, 2.2);
   return (
-    <Base fundo={C.light}>
-      <Entra><Rotulo cor={C.green}>Como funciona</Rotulo></Entra>
-      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo cor={C.dark} tamanho={72}>Um grafo de etapas, do dado bruto à decisão</Titulo></Entra>
+    <Base tema="pergaminho">
+      <Entra><Rotulo tema="pergaminho">Como funciona</Rotulo></Entra>
+      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo cor={C.tinta} tamanho={72}>Um grafo de etapas, do dado bruto à decisão</Titulo></Entra>
       <svg width={1664} height={20} style={{ position: "absolute", left: 128, top: 470 }} aria-hidden>
-        <motion.line x1={larg / 2} y1={10} x2={1664 - larg / 2} y2={10} stroke={C.green} strokeWidth={5} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.5, duration: 2.2, ease: "easeInOut" }} />
+        <motion.line x1={larg / 2} y1={10} x2={1664 - larg / 2} y2={10} stroke={C.ouroEscuro} strokeWidth={3} {...linha} />
       </svg>
-      {etapas.map(([t, d], k) => (
-        <motion.div key={t} initial={{ opacity: 0, y: 30, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.5 + k * 0.38, duration: 0.5, ease: EASE }}
-          style={{ position: "absolute", left: 128 + k * passo, top: 360, width: larg, minHeight: 230, background: k === 4 ? C.dark : C.card, border: `2px solid ${k === 4 ? C.amber : C.green}`, borderRadius: 18, padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: k === 4 ? C.amber : C.green }}>{k + 1}</div>
-          <div style={{ fontFamily: DISPLAY, fontSize: 34, fontWeight: 600, color: k === 4 ? C.light : C.dark, lineHeight: 1.1 }}>{t}</div>
-          <div style={{ fontSize: 24, color: k === 4 ? C.soft : C.softL, lineHeight: 1.35 }}>{d}</div>
-        </motion.div>
-      ))}
+      {etapas.map(([t, d], k) => {
+        const destaque = k === 4;
+        return (
+          <motion.div key={t} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 + k * 0.38, duration: 0.5, ease: EASE }}
+            style={{ position: "absolute", left: 128 + k * passo, top: 360, width: larg, minHeight: 230, background: destaque ? C.noite : C.marfim, border: `2px solid ${destaque ? C.ouro : C.ouroEscuro}`, boxShadow: destaque ? "0 18px 40px rgba(14,21,40,.35)" : "0 8px 20px rgba(43,33,22,.08)", padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ fontFamily: TITULO, fontSize: 34, fontWeight: 700, color: destaque ? C.cinabreClaro : C.cinabre, lineHeight: 1, ...NUMEROS }}>{k + 1}</div>
+            <div style={{ fontFamily: TITULO, fontSize: 36, fontWeight: 600, color: destaque ? C.marfim : C.tinta, lineHeight: 1.08 }}>{t}</div>
+            <div style={{ fontSize: 24, color: destaque ? C.nevoa : C.tintaSuave, lineHeight: 1.35 }}>{d}</div>
+          </motion.div>
+        );
+      })}
       <div style={{ position: "absolute", left: 128, top: 660, width: 1664, display: "flex", flexWrap: "wrap", gap: 14 }}>
         {detectores.map((d, k) => (
-          <motion.span key={d} initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 2.6 + k * 0.09, type: "spring", stiffness: 260, damping: 16 }}
-            style={{ fontSize: 26, padding: "10px 20px", borderRadius: 999, background: C.dark, color: C.light }}>{d}</motion.span>
+          <motion.span key={d} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.6 + k * 0.09, duration: 0.4, ease: EASE }}
+            style={{ fontSize: 26, padding: "10px 20px", borderRadius: 999, background: C.noite, color: C.marfim, border: `1px solid ${C.ouro}` }}>{d}</motion.span>
         ))}
       </div>
       <Entra atraso={3.8} style={{ position: "absolute", left: 128, top: 850, width: 1664 }}>
-        <p style={{ fontSize: 28, color: C.softL, margin: 0 }}><b style={{ color: C.dark }}>Graph Engineering:</b> o motor é um grafo; nomes parecidos viram um só produto. Sem caixa-preta: cada alerta tem a regra escrita.</p>
+        <p style={{ fontSize: 28, color: C.tintaSuave, margin: 0 }}><b style={{ color: C.tinta }}>Graph Engineering:</b> o motor é um grafo; nomes parecidos viram um só produto. Sem caixa-preta: cada alerta tem a regra escrita.</p>
       </Entra>
     </Base>
   );
@@ -413,20 +640,22 @@ function Visao() {
     ["Cooperativas", "várias fazendas num painel só"],
   ];
   const col = 1664 / 5;
+  const linha = useTraco(0.6, 2);
   return (
-    <Base fundo={`linear-gradient(180deg, ${C.dark}, ${C.dark2})`}>
+    <Base>
       <Entra><Rotulo>A visão</Rotulo></Entra>
-      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo tamanho={80}>Esta é a primeira versão.<br /><span style={{ color: C.amber }}>O caminho já está mapeado.</span></Titulo></Entra>
+      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo tamanho={80}>Esta é a primeira versão.<br /><span style={{ color: C.ouroClaro }}>O caminho já está mapeado.</span></Titulo></Entra>
       <svg width={1664} height={10} style={{ position: "absolute", left: 128, top: 545 }} aria-hidden>
-        <motion.line x1={col / 2} y1={5} x2={1664 - col / 2} y2={5} stroke={C.green} strokeWidth={6} initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.6, duration: 2, ease: "easeInOut" }} />
+        <motion.line x1={col / 2} y1={5} x2={1664 - col / 2} y2={5} stroke={C.ouro} strokeWidth={3} {...linha} />
       </svg>
       {passos.map(([t, d], k) => (
         <div key={t} style={{ position: "absolute", left: 128 + k * col, top: 500, width: col, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "0 14px" }}>
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.8 + k * 0.4, type: "spring", stiffness: 220, damping: 13 }}
-            style={{ width: 100, height: 100, borderRadius: 50, background: C.amber, color: C.dark, fontFamily: DISPLAY, fontSize: 48, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{k + 1}</motion.div>
-          <Entra atraso={1.0 + k * 0.4} y={20}>
-            <div style={{ fontFamily: DISPLAY, fontSize: 38, color: C.light, marginTop: 28, lineHeight: 1.15 }}>{t}</div>
-            <div style={{ fontSize: 26, color: C.soft, marginTop: 12, lineHeight: 1.4 }}>{d}</div>
+          <Medalhao tam={100} atraso={0.8 + k * 0.4} fundo={C.noite2}>
+            <span style={{ fontFamily: TITULO, fontSize: 52, fontWeight: 700, color: C.ouroClaro, ...NUMEROS }}>{k + 1}</span>
+          </Medalhao>
+          <Entra atraso={1.0 + k * 0.4} y={18}>
+            <div style={{ fontFamily: TITULO, fontSize: 40, fontWeight: 600, color: C.marfim, marginTop: 26, lineHeight: 1.1 }}>{t}</div>
+            <div style={{ fontSize: 26, color: C.nevoa, marginTop: 12, lineHeight: 1.4 }}>{d}</div>
           </Entra>
         </div>
       ))}
@@ -441,25 +670,28 @@ function Negocio() {
     ["Por que pagam", "Valor", "Sabem quando oferecer reposição antes de o cliente pedir."],
   ];
   return (
-    <Base fundo={C.light}>
-      <Entra><Rotulo cor={C.green}>Como vira negócio</Rotulo></Entra>
-      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo cor={C.dark} tamanho={76}>Grátis para quem planta. Valioso para quem vende.</Titulo></Entra>
-      <div style={{ display: "flex", alignItems: "stretch", gap: 20, marginTop: 90 }}>
-        {etapas.map(([t, tag, d], k) => (
-          <div key={t} style={{ display: "contents" }}>
-            <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 + k * 0.6, duration: 0.6, ease: EASE }}
-              style={{ flex: 1, background: k === 1 ? C.dark : C.card, border: `1px solid ${k === 1 ? C.dark : "#E2DCCB"}`, borderRadius: 24, padding: 44, display: "flex", flexDirection: "column", gap: 18 }}>
-              <span style={{ alignSelf: "flex-start", fontSize: 24, fontWeight: 700, padding: "6px 16px", borderRadius: 999, background: C.amber, color: C.dark }}>{tag}</span>
-              <h3 style={{ fontFamily: DISPLAY, fontSize: 46, fontWeight: 600, margin: 0, color: k === 1 ? C.light : C.dark, lineHeight: 1.15 }}>{t}</h3>
-              <p style={{ fontSize: 30, lineHeight: 1.4, margin: 0, color: k === 1 ? C.soft : C.softL }}>{d}</p>
-            </motion.div>
-            {k < 2 && (
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.0 + k * 0.6 }} style={{ display: "flex", alignItems: "center" }}>
-                <Icone tipo="seta" cor={C.green} tam={64} />
+    <Base tema="pergaminho">
+      <Entra><Rotulo tema="pergaminho">Como vira negócio</Rotulo></Entra>
+      <Entra atraso={0.15} style={{ marginTop: 20 }}><Titulo cor={C.tinta} tamanho={76}>Grátis para quem planta. Valioso para quem vende.</Titulo></Entra>
+      <div style={{ display: "flex", alignItems: "stretch", gap: 20, marginTop: 80 }}>
+        {etapas.map(([t, tag, d], k) => {
+          const meio = k === 1;
+          return (
+            <div key={t} style={{ display: "contents" }}>
+              <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 + k * 0.6, duration: 0.6, ease: EASE }}
+                style={{ flex: 1, background: meio ? C.noite : C.marfim, border: `2px solid ${meio ? C.ouro : C.borda}`, borderTop: `6px solid ${meio ? C.ouro : C.ouroEscuro}`, padding: 44, display: "flex", flexDirection: "column", gap: 18, boxShadow: meio ? "0 24px 50px rgba(14,21,40,.35)" : "0 10px 24px rgba(43,33,22,.08)" }}>
+                <span style={{ alignSelf: "flex-start", fontSize: 24, fontWeight: 700, padding: "6px 16px", borderRadius: 999, background: meio ? C.ouro : C.noite, color: meio ? C.noite : C.ouroClaro }}>{tag}</span>
+                <h3 style={{ fontFamily: TITULO, fontSize: 48, fontWeight: 600, margin: 0, color: meio ? C.marfim : C.tinta, lineHeight: 1.12 }}>{t}</h3>
+                <p style={{ fontSize: 30, lineHeight: 1.4, margin: 0, color: meio ? C.nevoa : C.tintaSuave }}>{d}</p>
               </motion.div>
-            )}
-          </div>
-        ))}
+              {k < 2 && (
+                <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.0 + k * 0.6 }} style={{ display: "flex", alignItems: "center" }}>
+                  <Icone tipo="seta" cor={C.ouroEscuro} tam={64} />
+                </motion.div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </Base>
   );
@@ -467,19 +699,22 @@ function Negocio() {
 
 function Fechamento() {
   return (
-    <Base fundo={`radial-gradient(circle at 50% 40%, #24503A, ${C.dark} 65%)`}>
-      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 128, gap: 30 }}>
-        <Entra><p style={{ fontSize: 38, color: C.soft, margin: 0 }}>Toda fazenda já tem os dados. Falta alguém olhando por ela todo dia.</p></Entra>
-        <motion.h1 initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5, duration: 0.9, ease: EASE }}
-          style={{ fontFamily: DISPLAY, fontSize: 168, fontWeight: 700, color: C.light, margin: 0, lineHeight: 1.05 }}>AgroSentinela</motion.h1>
-        <Entra atraso={1.0}><p style={{ fontFamily: DISPLAY, fontSize: 52, color: C.amber, margin: 0 }}>O que fazer hoje, por quê e quanto dá para confiar.</p></Entra>
-        <Entra atraso={1.5}>
-          <div style={{ display: "flex", gap: 24, justifyContent: "center", marginTop: 20, fontSize: 28, color: C.light }}>
-            <span style={{ padding: "12px 26px", borderRadius: 999, border: `2px solid ${C.green}` }}>github.com/ArmandoGT/agrohack2026</span>
+    <Base>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 128, gap: 26 }}>
+        <Entra><p style={{ fontSize: 38, color: C.nevoa, margin: 0 }}>Toda fazenda já tem os dados. Falta alguém olhando por ela todo dia.</p></Entra>
+        <h1 aria-label="AgroSentinela" style={{ display: "flex", alignItems: "flex-end", gap: 6, fontFamily: TITULO, fontSize: 160, fontWeight: 600, color: C.marfim, margin: 0, lineHeight: 1 }}>
+          <Capitular letra="A" tam={170} atraso={0.4} />
+          <motion.span aria-hidden initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8, duration: 0.8, ease: EASE }} style={{ paddingBottom: 8 }}>groSentinela</motion.span>
+        </h1>
+        <Filete largura={900} atraso={1.1} />
+        <Entra atraso={1.3}><p style={{ fontFamily: TITULO, fontSize: 54, fontWeight: 500, color: C.ouroClaro, margin: 0 }}>O que fazer hoje, por quê e quanto dá para confiar.</p></Entra>
+        <Entra atraso={1.7}>
+          <div style={{ display: "flex", gap: 24, justifyContent: "center", marginTop: 12, fontSize: 28, color: C.marfim }}>
+            <span style={{ padding: "12px 28px", borderRadius: 999, border: `2px solid ${C.ouro}` }}>github.com/ArmandoGT/agrohack2026</span>
           </div>
         </Entra>
-        <Entra atraso={1.9}><p style={{ fontSize: 26, color: C.soft, margin: "20px 0 0" }}>Equipe 3 Hacketeers · Armando · Pedro · Leandro · ADS IFRO Ariquemes</p></Entra>
-        <Entra atraso={2.3}><p style={{ fontFamily: DISPLAY, fontSize: 60, color: C.light, margin: "10px 0 0" }}>Obrigado!</p></Entra>
+        <Entra atraso={2.0}><p style={{ fontSize: 26, color: C.nevoa, margin: "14px 0 0" }}>Equipe 3 Hacketeers · Armando · Pedro · Leandro · ADS IFRO Ariquemes</p></Entra>
+        <Entra atraso={2.4}><p style={{ fontFamily: TITULO, fontSize: 64, fontWeight: 600, color: C.marfim, margin: "6px 0 0" }}>Obrigado!</p></Entra>
       </div>
     </Base>
   );
@@ -504,8 +739,8 @@ export const SLIDES: { id: string; titulo: string; tempo: string; notas: string;
     notas: "“O consumo subiu 87% em 4 meses. Quem olhasse a média do ano acharia que está tudo bem.” Apontar as barras subindo no fim do gráfico." },
   { id: "m3", titulo: "Momento 3 · 1 clique", tempo: "2:15–2:35", Componente: Momento3,
     notas: "“Era o mesmo adubo com dois nomes: KCl e Cloreto de potássio. Um clique, a análise é refeita e o alarme falso de ‘vai faltar’ some sozinho.” A tela troca sozinha para o aviso ‘Resolvido’." },
-  { id: "m4", titulo: "Momento 4 · 300 L", tempo: "2:35–2:55", Componente: Momento4,
-    notas: "“Alguém tirou 300 litros de glifosato de uma vez. Na hora o sistema refaz tudo e avisa: Novo, Crítico. É o tipo de coisa que hoje só se descobre no fim do mês.”" },
+  { id: "m4", titulo: "Momento 4 · 170 L", tempo: "2:35–2:55", Componente: Momento4,
+    notas: "“Alguém tirou 170 litros de glifosato de uma vez. Na hora o sistema refaz tudo e avisa: Novo, Atenção, vai faltar em breve. É o tipo de coisa que hoje só se descobre no fim do mês.”" },
   { id: "perguntas", titulo: "As 7 perguntas", tempo: "2:55–3:10", Componente: Perguntas,
     notas: "Rápido: “As 7 perguntas do desafio têm resposta no sistema — e o mapa está na tela Como funciona.” Não ler a lista inteira." },
   { id: "confianca", titulo: "Por que confiar", tempo: "3:10–3:40", Componente: Confianca,

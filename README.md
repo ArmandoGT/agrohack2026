@@ -59,7 +59,7 @@
 | ![Painel do dia no celular](docs/img/celular-painel.png) | ![Produtos no celular, em cards](docs/img/celular-produtos.png) |
 | **Celular** — menu fixo no rodapé, botões grandes e textos legíveis. | **Celular** — a tabela de produtos vira uma lista de cards. |
 
-Capturas de 23/10/2026 com a base **SIMULADA**, em 1440×900 (computador) e 390×844 (celular). A tela de registro mostra uma retirada de 900 L de glifosato feita só para a ilustração. Para gerar de novo: `npm run build && npm start` e, em outro terminal, `npm run capturar-telas` (requer o Microsoft Edge).
+Capturas de 23/10/2026 com a base **SIMULADA**, em 1440×900 (computador) e 390×844 (celular). A tela de registro mostra a retirada de 170 L de glifosato da demonstração (seção 6). Para gerar de novo: `npm run build && npm start` e, em outro terminal, `npm run capturar-telas` (requer o Microsoft Edge).
 
 ### Os 10 detectores
 
@@ -118,7 +118,7 @@ npm run build && npm start
 ## 6. Demonstração
 
 - **Vídeo:** _(link)_. O roteiro está em [`docs/roteiro-video.md`](docs/roteiro-video.md).
-- **Atualização e reanálise:** registre, por exemplo, uma retirada grande de glifosato em *Registrar entrada ou saída*. Ao salvar, o aviso no canto mostra "Novo · Atenção · Herbicida glifosato · Vai faltar em breve".
+- **Atualização e reanálise:** em *Registrar entrada ou saída*, registre uma retirada de **170 L** de "Herbicida glifosato" na data sugerida (a data de referência da base simulada). Ao salvar, o aviso no canto mostra só "Novo · Atenção · Herbicida glifosato · Vai faltar em breve". O teste `tests/demo.test.ts` garante esse resultado. Com a base simulada, o aviso é o mesmo para retiradas de 120 a 225 L; a partir de 230 L o nível passa a Crítico, e retiradas muito grandes também geram "Estoque crítico" e "Retirada fora do padrão".
 - **Unificação:** em *Cadastros duplicados*, unifique "KCl" com "Cloreto de potássio (KCl)". O alerta falso de ruptura do "KCl" é resolvido na hora.
 
 ## 7. Validação
