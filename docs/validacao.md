@@ -51,17 +51,42 @@ _(preencher quando a base oficial for divulgada)_
 - Revisão manual dos 20 primeiros alertas: quantos fazem sentido, quantos são falsos e por quê:
 - Ajustes feitos:
 
-## 4. Validação com usuários (Agronomia)
+## 4. Validação com usuários (campo)
 
-| Data | Quem (curso/função) | O que mostramos | Feedback | O que mudou |
+**Objetivo:** ouvir 2 ou 3 pessoas reais antes do pitch (29/10) e trazer **uma frase de campo que mude algo no produto**. O projeto vencedor do hackathon anterior do IFRO ganhou assim: o achado "o fator nº 1 não é a chuva, é a drenagem" veio de uma entrevista e virou a tese do pitch.
+
+**Com quem falar (10 minutos cada):**
+- o professor de Agronomia que propôs o desafio (Anexo III do regulamento);
+- um gerente de fazenda ou almoxarife da região;
+- um balconista ou gerente de revenda agropecuária ou de cooperativa em Ariquemes.
+
+### Roteiro de 10 minutos
+
+**1. Antes de mostrar o app (3 min), para descobrir a dor real**
+1. Como vocês sabem hoje que um insumo está acabando? (Planilha, caderno, olho no galpão?)
+2. Nos últimos 12 meses, o que mais deu prejuízo no estoque: **falta** na hora de usar, produto **vencido** ou compra **em excesso**? Conte um caso.
+3. Quem decide a compra, e com quantos dias de antecedência precisa decidir?
+
+**2. Mostrando o Painel do dia (5 min), para validar o produto**
+4. Olhando a tela, o que você faria primeiro? A ordem dos alertas faz sentido?
+5. A frase do alerta é clara para quem não é da TI? Algum termo confuso?
+6. O prazo de compra de 15 dias faz sentido para os insumos daqui? E 180 dias para "excesso"?
+7. Quais produtos têm sazonalidade forte (sementes, calcário) e não deveriam virar "excesso" fora da safra?
+
+**3. Fechamento (2 min), para buscar o achado central**
+8. Que situação real de estoque você já viu e que o sistema não pega?
+9. Se tivesse isso no celular amanhã, usaria? O que faltaria para usar?
+
+**Registre:** a frase literal mais forte (entre aspas), uma foto ou print da conversa (com permissão) e o nome do cargo ou da instituição. O nome da pessoa só entra com consentimento.
+
+### Registro
+
+| Data | Quem (cargo/instituição) | O que mostramos | Frase literal mais forte | O que mudou no produto |
 |---|---|---|---|---|
-| _(dia 8)_ | | | | |
-| _(dia 12)_ | | | | |
+| | | | | |
+| | | | | |
+| | | | | |
 
-Perguntas sugeridas para a sessão:
+### Achado central (para abrir o pitch)
 
-1. Olhando o Painel do dia, você saberia o que fazer primeiro? Alguma ordem te parece errada?
-2. A frase do alerta é clara para quem não é da TI? Algum termo confuso?
-3. O prazo de compra de 15 dias faz sentido para insumos da região? E 180 dias para "excesso"?
-4. Quais produtos têm sazonalidade forte (sementes, calcário) e não deveriam gerar "excesso" fora da safra?
-5. Que situação real de estoque você já viu e que o sistema não pega?
+> _(a frase que só quem ouviu o campo saberia, e o que mudamos por causa dela)_

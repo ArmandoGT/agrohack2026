@@ -115,24 +115,50 @@ npm run build && npm start
 - **Critérios, limiares e limites das estimativas:** ver [`docs/criterios-alertas.md`](docs/criterios-alertas.md).
 - **Base simulada:** `data/simulado.csv` é **SIMULADA** (coluna `simulado=true`, aviso fixo no topo do app). Ela só existe para desenvolver e testar até a base oficial ser divulgada. O gabarito das anomalias plantadas está em `data/ground_truth.json`.
 
+### O que é real e o que é simulado na demonstração
+
+- **Real:** o motor de análise, os 10 detectores, a prioridade, a reanálise e a importação. Tudo roda de verdade no navegador, sobre qualquer base importada.
+- **Simulado:** a base usada até a divulgação da oficial. Os produtos e o comportamento de consumo imitam uma propriedade da região, com soja, milho, café e horta, mas as situações problemáticas foram **plantadas por nós** para medir se cada regra funciona. Os nomes de responsáveis são fictícios.
+- **Quando a base oficial sair:** ela substitui a simulada na demonstração (tela *Importar planilha*), e a revisão manual dos alertas fica registrada em [`docs/validacao.md`](docs/validacao.md).
+
 ## 6. Demonstração
 
-- **Vídeo:** _(link)_. O roteiro está em [`docs/roteiro-video.md`](docs/roteiro-video.md).
+- **Vídeo:** _(preencher com o link do vídeo)_. O roteiro está em [`docs/roteiro-video.md`](docs/roteiro-video.md).
 - **Atualização e reanálise:** em *Registrar entrada ou saída*, registre uma retirada de **170 L** de "Herbicida glifosato" na data sugerida (a data de referência da base simulada). Ao salvar, o aviso no canto mostra só "Novo · Atenção · Herbicida glifosato · Vai faltar em breve". O teste `tests/demo.test.ts` garante esse resultado. Com a base simulada, o aviso é o mesmo para retiradas de 120 a 225 L; a partir de 230 L o nível passa a Crítico, e retiradas muito grandes também geram "Estoque crítico" e "Retirada fora do padrão".
 - **Unificação:** em *Cadastros duplicados*, unifique "KCl" com "Cloreto de potássio (KCl)". O alerta falso de ruptura do "KCl" é resolvido na hora.
 
 ## 7. Validação
 
-- **Loop de avaliação automática:** anomalias plantadas, comparadas com o gabarito, ajuste e nova rodada. Resultado atual: recall de 100% e precisão de 100% na base principal. Em 10 bases com sementes diferentes, a média foi **recall de 100% e precisão de 98,9%**. Detalhes em [`docs/eval-report.md`](docs/eval-report.md) e [`docs/validacao.md`](docs/validacao.md), incluindo o histórico das rodadas e o que mudou em cada uma.
-- **Testes unitários:** 16 testes cobrindo leitura, unidades, nulos, grafo de duplicados, DAG, detectores e a meta do eval. Rodam no CI (GitHub Actions) a cada push.
-- **Validação com usuários:** feedback com professor ou aluno de Agronomia, registrado em [`docs/validacao.md`](docs/validacao.md).
-- **Limitações conhecidas:** ver a seção "Limites" em [`docs/criterios-alertas.md`](docs/criterios-alertas.md).
+O plano de teste completo, com o oráculo de cada parte e os casos de caminho feliz e de erro, está em [`TESTING.md`](TESTING.md). Separamos três perguntas diferentes, porque cada uma tem uma prova diferente:
+
+1. **Cada regra faz o que promete?** Sim, e isso é medido. O loop de avaliação planta situações conhecidas na base simulada e compara os alertas com o gabarito: **recall de 100% e precisão de 100%** na base principal. Detalhes em [`docs/eval-report.md`](docs/eval-report.md).
+2. **As regras funcionam fora da base em que foram ajustadas?** O mesmo loop roda em 10 bases geradas com sementes diferentes: média de **recall de 100% e precisão de 98,9%**. Os falsos positivos estão listados no relatório.
+3. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md).
+
+Também temos **18 testes automatizados** (leitura, unidades, valores ausentes, grafo de duplicados, DAG, detectores, meta do eval e a demonstração de reanálise). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
+
+### O que funciona
+
+- Leitura de CSV e Excel com reconhecimento automático das colunas e relatório das linhas rejeitadas.
+- Os 10 detectores, a prioridade de 0 a 100 e a confiança de cada alerta, com o "Como calculamos?" em cada card.
+- Reanálise imediata ao registrar uma movimentação ou unificar cadastros, com aviso do que mudou.
+- Painel do dia, ficha do produto com projeção, financeiro (curva ABC) e versão para celular.
+- Publicado online, sem login: https://agrohack-agrosentinela.netlify.app
+
+### O que ainda pode melhorar
+
+- **Medir os alertas na base oficial** e revisar manualmente os 20 primeiros, assim que ela for divulgada.
+- **Calibrar os limiares com quem trabalha no campo.** Por exemplo: o prazo de compra de 15 dias e a sazonalidade de sementes e calcário, que hoje podem gerar "excesso" fora da safra.
+- **Testes automatizados de interface** (hoje a interface é testada pelos casos manuais do `TESTING.md`).
+- **Várias fazendas no mesmo painel**, para cooperativas e revendas, com login e regras de acesso por fazenda.
+- **Limitações das estimativas:** ver a seção "Limites" em [`docs/criterios-alertas.md`](docs/criterios-alertas.md). Segurança e dependências estão em [`SECURITY.md`](SECURITY.md).
 
 ## 8. Tecnologias e IA
 
 - **Stack:** Next.js 15 (React 19, TypeScript), Tailwind CSS 4, Recharts, PapaParse, SheetJS (xlsx), Supabase (opcional), Vitest e GitHub Actions.
 - **Motor de análise:** TypeScript puro, sem dependências, em `src/lib/engine/`. É organizado como um **grafo acíclico de etapas (DAG)**, e cada detector é um nó.
-- **Uso de IA:** declarado em [`IA.md`](IA.md), com ferramentas, finalidades, partes apoiadas e revisões feitas pela equipe.
+- **Uso de IA:** declarado em [`IA.md`](IA.md): ferramentas, como trabalhamos (plano aprovado antes do código), erros da IA que pegamos e corrigimos e o que a equipe decidiu.
+- **Segurança:** verificação executada e limitações em [`SECURITY.md`](SECURITY.md).
 
 ## 9. Autoria e licença
 
