@@ -18,13 +18,18 @@ export default function Importar() {
   const [res, setRes] = useState<(ResultadoImportacao & { nome: string }) | null>(null);
   const [lendo, setLendo] = useState(false);
   const [ok, setOk] = useState("");
+  const [erro, setErro] = useState("");
 
   const ler = async (f: File | undefined) => {
     if (!f) return;
     setLendo(true);
     setOk("");
+    setErro("");
     try {
       setRes({ ...(await lerArquivo(f)), nome: f.name });
+    } catch (e) {
+      setRes(null);
+      setErro(e instanceof Error ? e.message : "Não foi possível ler o arquivo.");
     } finally {
       setLendo(false);
     }
@@ -50,6 +55,11 @@ export default function Importar() {
             <input type="file" accept=".csv,.xlsx,.xls,text/csv" className="sr-only" onChange={(e) => ler(e.target.files?.[0])} />
           </label>
           {lendo && <p className="mt-3 text-base text-muted">Lendo…</p>}
+          {erro && (
+            <p role="alert" className="mt-3 rounded-lg border border-critico/30 bg-critico-soft p-3 text-base font-semibold text-critico">
+              {erro}
+            </p>
+          )}
           {res && (
             <div className="mt-4 space-y-3">
               <p className="text-base">
