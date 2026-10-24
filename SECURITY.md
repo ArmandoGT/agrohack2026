@@ -7,7 +7,7 @@ O **AgroSentinela** é um painel web (Next.js) que analisa registros de estoque.
 | Item | Como verificamos | Resultado |
 |---|---|---|
 | Segredos no repositório | `git grep` por padrões de chave (`sk-…`, JWT `eyJ…`, `AKIA…`, `-----BEGIN`) e conferência do `.gitignore` | Nenhum segredo versionado. `.env*` ignorado; só o `.env.example`, sem valores, está no repositório |
-| Dependências | `npm audit --omit=dev` | Next.js atualizado para 15.5.28 (correção da CVE-2025-55182, crítica). Restam: `xlsx` (alta, ver abaixo), `postcss` e `sharp` (altas, vêm dentro do Next.js e não são usados com entrada do usuário) |
+| Dependências | `npm audit --omit=dev` | Next.js atualizado para 15.5.28 (correção da CVE-2025-55182, crítica). Leitor de planilhas trocado pelo SheetJS 0.20.3 (ver abaixo), que sai do relatório. Restam `postcss` e `sharp` (altas, vêm dentro do Next.js e não são usados com entrada do usuário) |
 | Transporte | Deploy na Netlify | HTTPS por padrão, com HSTS |
 | Cabeçalhos HTTP | `netlify.toml` › `[[headers]]` | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Permissions-Policy` (câmera, microfone, localização e pagamento desligados) e `Strict-Transport-Security` |
 | Entrada do usuário | Leitura de CSV e XLSX em `src/lib/import.ts` | Arquivo limitado a 15 MB; só os campos conhecidos são lidos; linhas inválidas são rejeitadas com o motivo; nada é executado a partir do conteúdo |
@@ -29,7 +29,7 @@ O **AgroSentinela** é um painel web (Next.js) que analisa registros de estoque.
 
 ## Limitações conhecidas
 
-- **`xlsx` (SheetJS) do npm** tem dois avisos de segurança sem correção no registro npm: *prototype pollution* e *ReDoS* ao ler planilhas maliciosas. A correção oficial está na versão 0.20.3, distribuída pelo próprio SheetJS em `cdn.sheetjs.com`. A troca está pendente. Até lá, o risco fica limitado assim:
+- **Leitor de planilhas (SheetJS):** a versão `xlsx` 0.18.5 do registro npm tem dois avisos sem correção lá (*prototype pollution* e *ReDoS* ao ler planilhas maliciosas). Usamos a 0.20.3, que corrige os dois e é distribuída pelo próprio SheetJS em `cdn.sheetjs.com` (o `package-lock.json` fixa o endereço e o hash). Por isso o pacote não vem do registro npm. Além disso:
   - a leitura acontece no navegador de quem abriu o próprio arquivo;
   - o arquivo tem limite de 15 MB;
   - só a primeira aba é lida, e só nos campos conhecidos.
