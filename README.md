@@ -38,10 +38,10 @@
 | **Painel do dia** | Alertas ordenados por prioridade (Crítico, Atenção, Monitorar), resumo para o gestor, filtros |
 | **Produtos** | Saldo, mínimo, consumo/dia, cobertura em dias, valor e curva ABC de cada item |
 | **Ficha do produto** | Gráfico do saldo com **projeção**, consumo semanal, lotes por validade (FEFO), histórico |
-| **Registrar movimentação** | Nova entrada ou saída, com **reanálise imediata** e aviso do que mudou (alertas novos, resolvidos ou que mudaram de nível) |
+| **Registrar entrada ou saída** | Nova entrada ou saída, com **reanálise imediata** e aviso do que mudou (alertas novos, resolvidos ou que mudaram de nível) |
 | **Financeiro** | Curva ABC (Pareto), valor por categoria, dinheiro parado, excesso, variação de preço |
 | **Cadastros duplicados** | Grupos de nomes parecidos (grafo de similaridade); unificar com um clique e a análise é refeita |
-| **Importar dados** | CSV ou Excel com **mapeamento automático de colunas** e relatório de linhas rejeitadas |
+| **Importar planilha** | CSV ou Excel com **mapeamento automático de colunas** e relatório de linhas rejeitadas |
 | **Como funciona** | As 7 perguntas do edital, o pipeline (DAG) com tempos reais, critérios e limites |
 
 ### Os 10 detectores
@@ -78,7 +78,7 @@ npm run gerar-dados  # recria data/simulado.csv e o gabarito
 npm run build && npm start
 ```
 
-**Base oficial:** quando for divulgada, use *Importar dados* e envie o arquivo (CSV ou XLSX). As colunas são reconhecidas pelo nome.
+**Base oficial:** quando for divulgada, use *Importar planilha* e envie o arquivo (CSV ou XLSX). As colunas são reconhecidas pelo nome.
 
 **Persistência:**
 - Por padrão, os dados ficam no navegador.
@@ -101,7 +101,7 @@ npm run build && npm start
 ## 6. Demonstração
 
 - **Vídeo:** _(link)_. O roteiro está em [`docs/roteiro-video.md`](docs/roteiro-video.md).
-- **Atualização e reanálise:** registre, por exemplo, uma retirada grande de glifosato em *Registrar movimentação*. Ao salvar, o aviso no canto mostra "Novo · Atenção · Herbicida glifosato · Vai faltar em breve".
+- **Atualização e reanálise:** registre, por exemplo, uma retirada grande de glifosato em *Registrar entrada ou saída*. Ao salvar, o aviso no canto mostra "Novo · Atenção · Herbicida glifosato · Vai faltar em breve".
 - **Unificação:** em *Cadastros duplicados*, unifique "KCl" com "Cloreto de potássio (KCl)". O alerta falso de ruptura do "KCl" é resolvido na hora.
 
 ## 7. Validação

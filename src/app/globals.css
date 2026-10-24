@@ -1,23 +1,38 @@
 @import "tailwindcss";
 
+/*
+ * Paleta "Iluminura": pergaminho e marfim de fundo, folha de ouro como acento,
+ * ultramarino e cinabre como cores fortes e verde-terra para a marca.
+ * Os nomes semânticos (--critico, --atencao, --monitorar, --ok, --brand...) são
+ * os mesmos de antes; só os valores mudaram. Todos os pares texto/fundo usados
+ * nas telas passam WCAG AA (≥ 4,5:1). O ouro é só ornamento, nunca texto pequeno.
+ */
 :root {
-  --bg: #f6f5f0;
-  --surface: #ffffff;
-  --surface-2: #f0efe8;
-  --border: #e2e0d6;
-  --text: #1d2a22;
-  --muted: #5f6b63;
-  --brand: #1f6b3a;
-  --brand-strong: #15502b;
-  --brand-soft: #e3f0e6;
-  --critico: #b42318;
-  --critico-soft: #fdecea;
-  --atencao: #a15c07;
-  --atencao-soft: #fdf3e2;
-  --monitorar: #2457a6;
-  --monitorar-soft: #e8f0fb;
-  --ok: #217a45;
-  --ok-soft: #e6f4ec;
+  --bg: #f3ead5; /* pergaminho */
+  --surface: #fdf8ec; /* marfim */
+  --surface-2: #f1e7cf;
+  --border: #dccaa0;
+  --border-strong: #8a7650; /* bordas de campos: 3:1 sobre o marfim */
+  --text: #2b2116; /* tinta ferrogálica */
+  --muted: #5c4e3b;
+  --brand: #3e5b2b; /* verde-terra */
+  --brand-strong: #2b4220;
+  --brand-soft: #e5e7cd;
+  --critico: #a3241a; /* cinabre */
+  --critico-soft: #f7e1d7;
+  --atencao: #7d5000; /* ocre */
+  --atencao-soft: #f7ebcf;
+  --monitorar: #24408e; /* ultramarino */
+  --monitorar-soft: #e3e7f4;
+  --ok: #2e6a33;
+  --ok-soft: #e2ecd5;
+
+  /* Acentos decorativos */
+  --ouro: #a8822e; /* folha de ouro: filetes, molduras, capitulares grandes */
+  --ouro-claro: #d8b965;
+  --ouro-escuro: #7a5c1c; /* ouro que pode ser texto */
+  --ultramar: #24408e;
+  --carmim: #8e1b2c;
 }
 
 @theme inline {
@@ -25,6 +40,7 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-brand: var(--brand);
@@ -38,14 +54,38 @@
   --color-monitorar-soft: var(--monitorar-soft);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ouro: var(--ouro);
+  --color-ouro-claro: var(--ouro-claro);
+  --color-ouro-escuro: var(--ouro-escuro);
+  --color-ultramar: var(--ultramar);
+  --color-carmim: var(--carmim);
+  --font-sans: var(--font-texto), system-ui, sans-serif;
+  --font-serif: var(--font-titulo), Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+@layer base {
+  body {
+    /* Pergaminho: tom base com leve variação de luz, sem imagens. */
+    background:
+      radial-gradient(120% 80% at 0% 0%, rgb(255 251 240 / 0.7), transparent 60%),
+      radial-gradient(100% 70% at 100% 100%, rgb(168 130 46 / 0.08), transparent 60%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--font-texto), system-ui, sans-serif;
+  }
+
+  h1,
+  h2 {
+    font-family: var(--font-titulo), Georgia, serif;
+    letter-spacing: 0.005em;
+  }
+
+  ::selection {
+    background: var(--ouro-claro);
+    color: var(--text);
+  }
 }
 
 .tabular {
@@ -53,6 +93,39 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 3px solid var(--ultramar);
   outline-offset: 2px;
+}
+
+/* Capitular de título: a primeira letra em cinabre, como nos livros de horas. */
+.capitular::first-letter {
+  color: var(--carmim);
+  font-size: 1.18em;
+}
+
+/* Filete duplo dourado (topo e base de faixas). */
+.filete {
+  border-color: var(--ouro);
+  border-style: double;
+}
+
+/*
+ * Ornamento de margem: um ramo vertical discreto desenhado em SVG inline,
+ * mostrado só em telas largas e fora da área de leitura.
+ */
+.margem-iluminada {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='120' viewBox='0 0 28 120'%3E%3Cg fill='none' stroke='%23a8822e' stroke-width='1' opacity='.55'%3E%3Cpath d='M14 0v120'/%3E%3Cpath d='M14 22c-6-2-9-7-9-12 5 1 8 5 9 12zM14 82c6-2 9-7 9-12-5 1-8 5-9 12z'/%3E%3C/g%3E%3Cg fill='%23a8822e' opacity='.5'%3E%3Ccircle cx='14' cy='52' r='2'/%3E%3Ccircle cx='9' cy='52' r='1'/%3E%3Ccircle cx='19' cy='52' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat-y;
+  background-size: 28px 120px;
+}
+
+/* Tabelas de dados: limpas, com filete dourado sob o cabeçalho. */
+.tabela thead th {
+  border-bottom: 1px solid var(--ouro);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
