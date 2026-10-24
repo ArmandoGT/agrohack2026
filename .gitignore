@@ -20,6 +20,9 @@
 # production
 /build
 
+# vídeo demonstrativo gerado por npm run gravar-video (não versionado)
+/video/
+
 # misc
 .DS_Store
 *.pem
