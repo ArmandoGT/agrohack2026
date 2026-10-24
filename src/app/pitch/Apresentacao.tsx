@@ -2,13 +2,16 @@
 
 // Motor da apresentação: palco 1920×1080 escalado para a janela, navegação por teclado/clique,
 // transição entre slides (Motion) e notas do apresentador (tecla N).
+// Transição curta e sempre igual: o slide sai em 0,22 s e o próximo entra em 0,38 s (0,6 s no total).
+// Com prefers-reduced-motion, o MotionConfig deixa só o fade (sem deslocamento nem escala).
 
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { C, SLIDES } from "./slides";
 
 const W = 1920;
 const H = 1080;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function Apresentacao() {
   const [i, setI] = useState(0);
@@ -49,42 +52,47 @@ export function Apresentacao() {
 
   const slide = SLIDES[i];
 
+  const progresso = ((i + 1) / SLIDES.length) * 100;
+
   return (
-    <div
-      style={{ position: "fixed", inset: 0, background: "#07120D", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontFamily: "var(--font-dm), Arial, sans-serif" }}
-      onClick={(e) => (e.clientX > window.innerWidth / 3 ? ir(i + 1) : ir(i - 1))}
-    >
-      <div style={{ width: W, height: H, flexShrink: 0, transform: `scale(${escala})`, position: "relative", overflow: "hidden", background: C.dark }}>
-        <AnimatePresence mode="wait" custom={dir}>
-          <motion.div
-            key={slide.id}
-            custom={dir}
-            initial={{ opacity: 0, x: 80 * dir }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -80 * dir }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            style={{ position: "absolute", inset: 0 }}
-          >
-            <slide.Componente />
-          </motion.div>
-        </AnimatePresence>
+    <MotionConfig reducedMotion="user">
+      <div
+        style={{ position: "fixed", inset: 0, background: "#070B16", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontFamily: "var(--font-texto), 'Source Sans 3', Arial, sans-serif" }}
+        onClick={(e) => (e.clientX > window.innerWidth / 3 ? ir(i + 1) : ir(i - 1))}
+      >
+        <div style={{ width: W, height: H, flexShrink: 0, transform: `scale(${escala})`, position: "relative", overflow: "hidden", background: C.noite }}>
+          <AnimatePresence mode="wait" custom={dir}>
+            <motion.div
+              key={slide.id}
+              custom={dir}
+              initial={{ opacity: 0, x: 36 * dir }}
+              animate={{ opacity: 1, x: 0, transition: { duration: 0.38, ease: EASE } }}
+              exit={{ opacity: 0, x: -24 * dir, transition: { duration: 0.22, ease: "easeIn" } }}
+              style={{ position: "absolute", inset: 0 }}
+            >
+              <slide.Componente />
+            </motion.div>
+          </AnimatePresence>
 
-        {/* Barra de progresso */}
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 6, background: "rgba(0,0,0,.15)" }}>
-          <motion.div animate={{ width: `${((i + 1) / SLIDES.length) * 100}%` }} transition={{ duration: 0.5 }} style={{ height: "100%", background: C.amber }} />
+          {/* Barra de progresso: filete de ouro com um losango na ponta */}
+          <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 5, background: "rgba(14,21,40,.55)" }}>
+            <motion.div animate={{ width: `${progresso}%` }} transition={{ duration: 0.5, ease: EASE }} style={{ position: "relative", height: "100%", background: `linear-gradient(90deg, ${C.ouroEscuro}, ${C.ouro})` }}>
+              <span style={{ position: "absolute", right: -7, top: -5, width: 14, height: 14, background: C.ouroClaro, transform: "rotate(45deg)" }} />
+            </motion.div>
+          </div>
+          <div style={{ position: "absolute", right: 64, bottom: 14, padding: "2px 12px", fontSize: 22, color: C.marfim, background: "rgba(14,21,40,.75)", fontVariantNumeric: "tabular-nums" }}>
+            {i + 1} / {SLIDES.length}
+          </div>
         </div>
-        <div style={{ position: "absolute", right: 40, bottom: 24, fontSize: 22, color: "rgba(128,140,130,.9)", fontVariantNumeric: "tabular-nums" }}>
-          {i + 1} / {SLIDES.length}
-        </div>
+
+        {notas && (
+          <div onClick={(e) => e.stopPropagation()} style={{ position: "fixed", left: 16, right: 16, bottom: 16, maxHeight: "38vh", overflow: "auto", background: "rgba(14,21,40,.97)", color: C.marfim, border: `1px solid ${C.ouro}`, borderTop: `4px double ${C.ouro}`, borderRadius: 8, padding: "16px 20px", fontSize: 17, lineHeight: 1.55 }}>
+            <div style={{ color: C.ouroClaro, fontWeight: 700, marginBottom: 6 }}>Notas · {slide.titulo} · {slide.tempo}</div>
+            {slide.notas}
+            <div style={{ marginTop: 10, fontSize: 14, color: C.nevoa }}>→ / espaço: avançar · ←: voltar · F: tela cheia · N: esconder notas</div>
+          </div>
+        )}
       </div>
-
-      {notas && (
-        <div onClick={(e) => e.stopPropagation()} style={{ position: "fixed", left: 16, right: 16, bottom: 16, maxHeight: "38vh", overflow: "auto", background: "rgba(16,36,27,.96)", color: "#F5F1E6", border: `1px solid ${C.green}`, borderRadius: 12, padding: "16px 20px", fontSize: 16, lineHeight: 1.5 }}>
-          <div style={{ color: C.amber, fontWeight: 700, marginBottom: 6 }}>Notas · {slide.titulo} · {slide.tempo}</div>
-          {slide.notas}
-          <div style={{ marginTop: 10, fontSize: 13, color: C.soft }}>→ / espaço: avançar · ←: voltar · F: tela cheia · N: esconder notas</div>
-        </div>
-      )}
-    </div>
+    </MotionConfig>
   );
 }

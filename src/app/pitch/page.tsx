@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
-import { Oswald, DM_Sans } from "next/font/google";
 import { Apresentacao } from "./Apresentacao";
 
-// Fontes servidas pelo próprio app: a apresentação funciona sem internet (plano B).
-const oswald = Oswald({ variable: "--font-oswald", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
-const dmSans = DM_Sans({ variable: "--font-dm", subsets: ["latin"], weight: ["400", "500", "700"] });
+// As fontes (EB Garamond e Source Sans 3) vêm do layout do app via next/font, servidas pelo
+// próprio app: a apresentação funciona sem internet (plano B).
 
 export const metadata: Metadata = {
   title: "AgroSentinela — Pitch AGROHACK 2026/2",
@@ -12,9 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function PaginaPitch() {
-  return (
-    <div className={`${oswald.variable} ${dmSans.variable}`}>
-      <Apresentacao />
-    </div>
-  );
+  return <Apresentacao />;
 }
