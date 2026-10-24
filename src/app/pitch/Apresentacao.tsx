@@ -2,12 +2,14 @@
 
 // Motor da apresentação: palco 1920×1080 escalado para a janela, navegação por teclado/clique,
 // transição entre slides (Motion) e notas do apresentador (tecla N).
+// Nos slides com câmera, → (e o passador) primeiro avança a câmera e só depois passa o slide,
+// como as animações do PowerPoint; ↓ e ↑ movem só a câmera.
 // Transição curta e sempre igual: o slide sai em 0,22 s e o próximo entra em 0,38 s (0,6 s no total).
 // Com prefers-reduced-motion, o MotionConfig deixa só o fade (sem deslocamento nem escala).
 
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
-import { C, SLIDES } from "./slides";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { C, CameraCtx, SLIDES, type ControleCamera } from "./slides";
 
 const W = 1920;
 const H = 1080;
@@ -18,12 +20,17 @@ export function Apresentacao() {
   const [dir, setDir] = useState(1);
   const [escala, setEscala] = useState(1);
   const [notas, setNotas] = useState(false);
+  const camera = useRef<ControleCamera | null>(null);
 
   useEffect(() => {
     const ajustar = () => setEscala(Math.min(window.innerWidth / W, window.innerHeight / H));
     ajustar();
     window.addEventListener("resize", ajustar);
     return () => window.removeEventListener("resize", ajustar);
+  }, []);
+
+  const avancar = useCallback(() => {
+    if (!camera.current?.avancar()) setI((atual) => { setDir(1); return Math.min(SLIDES.length - 1, atual + 1); });
   }, []);
 
   const ir = useCallback((n: number) => {
@@ -36,7 +43,9 @@ export function Apresentacao() {
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
-      if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); ir(i + 1); }
+      if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) { e.preventDefault(); avancar(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); camera.current?.avancar(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); camera.current?.voltar(); }
       else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); ir(i - 1); }
       else if (e.key === "Home") ir(0);
       else if (e.key === "End") ir(SLIDES.length - 1);
@@ -48,7 +57,7 @@ export function Apresentacao() {
     };
     window.addEventListener("keydown", tecla);
     return () => window.removeEventListener("keydown", tecla);
-  }, [i, ir]);
+  }, [i, ir, avancar]);
 
   const slide = SLIDES[i];
 
@@ -58,7 +67,7 @@ export function Apresentacao() {
     <MotionConfig reducedMotion="user">
       <div
         style={{ position: "fixed", inset: 0, background: "#070B16", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontFamily: "var(--font-texto), 'Source Sans 3', Arial, sans-serif" }}
-        onClick={(e) => (e.clientX > window.innerWidth / 3 ? ir(i + 1) : ir(i - 1))}
+        onClick={(e) => (e.clientX > window.innerWidth / 3 ? avancar() : ir(i - 1))}
       >
         <div style={{ width: W, height: H, flexShrink: 0, transform: `scale(${escala})`, position: "relative", overflow: "hidden", background: C.noite }}>
           <AnimatePresence mode="wait" custom={dir}>
@@ -70,7 +79,9 @@ export function Apresentacao() {
               exit={{ opacity: 0, x: -24 * dir, transition: { duration: 0.22, ease: "easeIn" } }}
               style={{ position: "absolute", inset: 0 }}
             >
-              <slide.Componente />
+              <CameraCtx.Provider value={camera}>
+                <slide.Componente />
+              </CameraCtx.Provider>
             </motion.div>
           </AnimatePresence>
 
@@ -89,7 +100,7 @@ export function Apresentacao() {
           <div onClick={(e) => e.stopPropagation()} style={{ position: "fixed", left: 16, right: 16, bottom: 16, maxHeight: "38vh", overflow: "auto", background: "rgba(14,21,40,.97)", color: C.marfim, border: `1px solid ${C.ouro}`, borderTop: `4px double ${C.ouro}`, borderRadius: 8, padding: "16px 20px", fontSize: 17, lineHeight: 1.55 }}>
             <div style={{ color: C.ouroClaro, fontWeight: 700, marginBottom: 6 }}>Notas · {slide.titulo} · {slide.tempo}</div>
             {slide.notas}
-            <div style={{ marginTop: 10, fontSize: 14, color: C.nevoa }}>→ / espaço: avançar · ←: voltar · F: tela cheia · N: esconder notas</div>
+            <div style={{ marginTop: 10, fontSize: 14, color: C.nevoa }}>→ / espaço / passador: avançar (câmera, depois slide) · ↓ ↑: câmera · ←: voltar slide · F: tela cheia · N: esconder notas</div>
           </div>
         )}
       </div>

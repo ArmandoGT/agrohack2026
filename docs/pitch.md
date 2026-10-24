@@ -6,16 +6,17 @@
 
 - **Abrir:** `npm run build && npm start` e acessar `http://localhost:3000/pitch`. Funciona sem internet, porque as fontes e as telas são servidas pelo próprio app.
 - **Teclado:**
-  - → ou espaço avança;
-  - ← volta;
+  - → , espaço ou o **passador** avançam. Nos slides com câmera (4 a 9), primeiro avançam a câmera e só depois passam o slide, como as animações do PowerPoint;
+  - ↓ e ↑ movem só a câmera (próxima ou anterior parada);
+  - ← volta um slide;
   - **F** liga a tela cheia;
   - **N** mostra as notas do apresentador, com fala e tempo de cada slide.
 - **Conteúdo:**
   - 15 slides animados com a biblioteca Motion, com a mesma identidade "Iluminura" do app: pergaminho, folha de ouro, cinabre e ultramarino, com EB Garamond nos títulos e Source Sans 3 no texto. Os slides escuros imitam um painel de altar, em ultramarino com ouro, e todos os textos passam o contraste AA com folga para projetor;
   - o motion acompanha a fala: filetes de ouro que se desenham, capitulares que surgem e revelações em sequência. Nada fica em loop, e a troca de slide leva 0,6 s;
-  - as telas são **capturas reais do sistema** (base simulada), em `public/pitch/`. Nos 4 momentos da demo, um arco ogival se abre sobre a tela, o zoom aproxima o ponto que está sendo falado e um filete de ouro o contorna;
-  - se o computador estiver com **"reduzir movimento"** ligado, os slides só fazem fade, sem zoom nem deslocamento.
-- **Recapturar as telas** (por exemplo, com a base oficial): com o app rodando (`npm run build && npm start`), rode `npm run capturar-telas -- pitch`. O script regrava `public/pitch/*.png` nos mesmos estados e `src/app/pitch/focos.json`, que diz onde o zoom deve parar em cada tela. No Linux, indique o navegador com `EDGE_PATH=/caminho/do/chrome`.
+  - as telas são **capturas reais do sistema** (base simulada), em `public/pitch/`. Nos slides 4 a 9, a tela abre num arco ogival e depois a **câmera** a leva para o slide inteiro e passeia pelos pontos falados, com zoom suficiente para ler do fundo do auditório: o texto do app chega a 30–40 px no slide de 1080 px. Um filete de ouro contorna cada ponto e uma faixa embaixo diz o que se está vendo. A câmera avança sozinha no ritmo da fala e, no fim, volta ao arco;
+  - se o computador estiver com **"reduzir movimento"** ligado, os slides só fazem fade: a câmera troca de ponto sem movimento.
+- **Recapturar as telas** (por exemplo, com a base oficial): com o app rodando (`npm run build && npm start`), rode `npm run capturar-telas -- pitch`. O script regrava `public/pitch/*.png` nos mesmos estados e `src/app/pitch/focos.json`, com o tamanho de cada tela e as paradas da câmera. No Linux, indique o navegador com `EDGE_PATH=/caminho/do/chrome`.
 - **Base oficial:** quando ela sair, refazer as capturas com ela e trocar os números dos slides 6 a 9.
 - **Prévia:** [capa](img/pitch/slide-01-capa.jpg), [a dor](img/pitch/slide-02-dor.jpg), [momento 4 da demo](img/pitch/slide-09-momento4.jpg), [por que confiar](img/pitch/slide-11-confianca.jpg); transições: [abertura](img/pitch/transicao-abertura.gif) e [momento 3](img/pitch/transicao-momento3.gif).
 
