@@ -10,6 +10,7 @@ import { cadastroDuplicado, qualidadeDados } from "./detectors/qualidade";
 import { riscoVencimento } from "./detectors/validade";
 import { chaveProduto, gruposDuplicados } from "./entities";
 import { normalizarNome } from "./normalize";
+import { preverConsumo } from "./previsao";
 import { ordenarAlertas } from "./priority";
 import { classificarABC, montarProduto } from "./stock";
 import type { Alerta, Analise, Config, DetectorId, GrupoDuplicado, Movimentacao, ProdutoAnalise } from "./types";
@@ -88,6 +89,17 @@ function construirPipeline(): No<Estado>[] {
       },
     },
   ];
+  nos.push({
+    id: "previsao",
+    rotulo: "Previsão (modelo)",
+    dependeDe: ["saldos"],
+    executar: (s) => {
+      for (const p of s.produtos.values()) p.previsao = preverConsumo(p, s.dataRef);
+      const lista = [...s.produtos.values()];
+      const conta = (st: string) => lista.filter((p) => p.previsao?.status === st).length;
+      return `modelo venceu a média em ${conta("modelo")} produto(s); média em ${conta("media")}; histórico curto em ${conta("curto")}`;
+    },
+  });
   for (const [id, rotulo, det] of DETECTORES_POR_PRODUTO) {
     nos.push({
       id,

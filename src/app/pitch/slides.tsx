@@ -756,7 +756,7 @@ export const SLIDES: { id: string; titulo: string; tempo: string; notas: string;
   { id: "m1", titulo: "Momento 1 · 9 dias", tempo: "1:35–1:55", Componente: Momento1,
     notas: "“Mantendo o consumo dos últimos 30 dias, o diesel dura cerca de 9 dias. O prazo de compra é 15. Ele já está atrasado — e o sistema mostra a conta e a confiança.”" },
   { id: "m2", titulo: "Momento 2 · +87%", tempo: "1:55–2:15", Componente: Momento2,
-    notas: "“O consumo subiu 87% em 4 meses. Quem olhasse a média do ano acharia que está tudo bem.” Apontar as barras subindo no fim do gráfico." },
+    notas: "“O consumo subiu 87% em 4 meses. Quem olhasse a média do ano acharia que está tudo bem.” Apontar as barras subindo no fim do gráfico. Se perguntarem sobre IA: “Um modelo de previsão aprende essa tendência e confirma: o diesel zera por volta de 18/10. Ele só aparece porque, escondendo as últimas 4 semanas, errou 14% contra 18% da média. Nenhum alerta depende dele.”" },
   { id: "m3", titulo: "Momento 3 · 1 clique", tempo: "2:15–2:35", Componente: Momento3,
     notas: "“Era o mesmo adubo com dois nomes: KCl e Cloreto de potássio. Um clique, a análise é refeita e o alarme falso de ‘vai faltar’ some sozinho.” A tela troca sozinha para o aviso ‘Resolvido’." },
   { id: "m4", titulo: "Momento 4 · 170 L", tempo: "2:35–2:55", Componente: Momento4,

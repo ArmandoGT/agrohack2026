@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Fleurao, IconeVoltar } from "@/components/icones";
 import { AlertaCard, BadgeNivel, Card, fmtData, fmtNum, fmtR$, Kpi, Secao } from "@/components/ui";
 import { diasEntre, fatorConversao, somarDias } from "@/lib/engine/normalize";
-import type { ProdutoAnalise } from "@/lib/engine/types";
+import type { PrevisaoConsumo, ProdutoAnalise } from "@/lib/engine/types";
 import { useDados } from "@/lib/store";
 import { alertasDoProduto, piorNivel } from "@/lib/util";
 
@@ -20,7 +20,7 @@ function series(p: ProdutoAnalise, dataRef: string) {
     const d = diasEntre(p.inicio, m.data);
     if (d >= 0 && d < n) delta[d] += (m.tipo === "entrada" ? 1 : -1) * m.quantidade * f;
   }
-  const saldo: { data: string; saldo?: number; projecao?: number }[] = [];
+  const saldo: { data: string; saldo?: number; projecao?: number; modelo?: number; faixa?: [number, number] }[] = [];
   let s = 0;
   for (let d = 0; d < n; d++) {
     s += delta[d];
@@ -32,6 +32,22 @@ function series(p: ProdutoAnalise, dataRef: string) {
     const fim = Math.min(90, Math.ceil(s / p.consumoMedioDia));
     for (let d = 3; d <= fim; d += 3) saldo.push({ data: somarDias(dataRef, d), projecao: Math.max(0, Math.round((s - p.consumoMedioDia * d) * 100) / 100) });
   }
+  // Previsão do modelo (só quando ele venceu a média no teste), com a faixa de 80%, até zerar.
+  const v = p.previsao;
+  if (v?.status === "modelo" && s > 0) {
+    const r = (x: number) => Math.max(0, Math.round(x * 100) / 100);
+    const pontos = [{ data: dataRef, modelo: s, faixa: [s, s] as [number, number] }];
+    for (const f of v.projecao) {
+      pontos.push({ data: f.data, modelo: r(s - f.centro), faixa: [r(s - f.alto), r(s - f.baixo)] });
+      if (s - f.baixo <= 0) break;
+    }
+    for (const pt of pontos) {
+      const existente = saldo.find((x) => x.data === pt.data);
+      if (existente) Object.assign(existente, { modelo: pt.modelo, faixa: pt.faixa });
+      else saldo.push(pt);
+    }
+    saldo.sort((a, b) => a.data.localeCompare(b.data));
+  }
   const semanas: { semana: string; consumo: number }[] = [];
   const c = p.consumoDiario;
   for (let fim = c.length; fim > 0 && semanas.length < 52; fim -= 7) {
@@ -41,6 +57,57 @@ function series(p: ProdutoAnalise, dataRef: string) {
 }
 
 const curta = (d: string) => d.slice(8, 10) + "/" + d.slice(5, 7);
+const pct = (x: number | null) => (x === null ? "—" : `${fmtNum(x * 100, 0)}%`);
+
+/** Resumo do modelo de previsão em linguagem simples, com a prova do teste ao lado. */
+function PrevisaoModelo({ v, dataRef, unidade }: { v: PrevisaoConsumo; dataRef: string; unidade: string }) {
+  const b = v.backtest;
+  const teste = b && (
+    <p className="mt-2 text-sm text-muted">
+      Teste: escondemos as últimas 4 semanas ({b.rodadas} {b.rodadas === 1 ? "vez" : "vezes"}) e comparamos com o consumo real. Erro do modelo:{" "}
+      <strong className="text-text">{pct(b.wapeModelo)}</strong>; erro da média simples: <strong className="text-text">{pct(b.wapeMedia)}</strong>. A faixa de 80% acertou{" "}
+      {b.faixaAcertou} de {b.rodadas}.
+      {v.status === "modelo" && b.faixaAcertou * 2 < b.rodadas && " Neste produto o consumo real saiu da faixa na maioria dos testes: leia as datas com cautela."}
+    </p>
+  );
+  const z = v.diasAteZerar;
+  const quando = (d: number | null) => (d === null ? "depois de 12 semanas" : fmtData(somarDias(dataRef, d)));
+  return (
+    <Card className="mt-3">
+      <h2 className="text-xl font-semibold">Previsão do modelo</h2>
+      {v.status === "modelo" && z && (
+        <>
+          <p className="mt-1 text-base">
+            {z.centro === null ? (
+              <>
+                No ritmo que o modelo aprendeu, o saldo <strong>dura mais de 12 semanas</strong>.
+              </>
+            ) : (
+              <>
+                O saldo deve zerar por volta de <strong>{fmtData(somarDias(dataRef, z.centro))}</strong> (~{z.centro} dias), entre {quando(z.pessimista)} e {quando(z.otimista)}.
+              </>
+            )}{" "}
+            {v.tendenciaSemanal !== null && Math.abs(v.tendenciaSemanal) >= 0.005 && (
+              <span className="text-muted">
+                Tendência: consumo {v.tendenciaSemanal > 0 ? "subindo" : "caindo"} ~{fmtNum(Math.abs(v.tendenciaSemanal))} {unidade} por semana.
+              </span>
+            )}
+          </p>
+          {teste}
+        </>
+      )}
+      {v.status === "media" && (
+        <>
+          <p className="mt-1 text-base">
+            Para este produto, o modelo <strong>não foi claramente melhor que a média simples</strong> no teste (precisa errar pelo menos 5% menos). Por isso o app continua usando a média.
+          </p>
+          {teste}
+        </>
+      )}
+      {v.status === "curto" && <p className="mt-1 text-base text-muted">Sem previsão do modelo: {v.motivo}.</p>}
+    </Card>
+  );
+}
 
 // Gráficos limpos: eixos em sans, cor de tinta suave, dica no tom do marfim.
 const eixo = { fontSize: 13, fill: "var(--muted)", fontFamily: "var(--font-texto)" };
@@ -79,6 +146,7 @@ export default function ProdutoDetalhe() {
         <Kpi rotulo="Valor em estoque" valor={fmtR$(p.valorEstoque)} detalhe={p.valorEstimado ? "estimado (entradas sem preço)" : undefined} />
         <Kpi rotulo="Última retirada" valor={fmtData(p.ultimaSaida)} detalhe={p.ultimaSaida ? `há ${diasEntre(p.ultimaSaida, analise.dataReferencia)} dias` : undefined} />
       </section>
+      {p.previsao && <PrevisaoModelo v={p.previsao} dataRef={analise.dataReferencia} unidade={p.unidade} />}
 
       {alertas.length > 0 && (
         <section className="mt-6">
@@ -94,19 +162,21 @@ export default function ProdutoDetalhe() {
       <section className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card>
           <h2 className="text-xl font-semibold">Saldo ao longo do tempo</h2>
-          <p className="mt-0.5 text-sm text-muted">Linha verde: saldo. Linha azul tracejada: projeção mantendo o consumo médio ({p.janelaTaxa}). Linha vermelha: estoque mínimo.</p>
+          <p className="mt-0.5 text-sm text-muted">Linha verde: saldo. Linha azul tracejada: projeção mantendo o consumo médio ({p.janelaTaxa}).{p.previsao?.status === "modelo" && " Linha dourada: previsão do modelo, com a faixa de 80% sombreada."} Linha vermelha: estoque mínimo.</p>
           <div className="mt-3 h-64" role="img" aria-label={`Gráfico do saldo de ${p.nome}`}>
             <ResponsiveContainer>
-              <LineChart data={dados.saldo} margin={{ left: 0, right: 8, top: 20 }}>
+              <ComposedChart data={dados.saldo} margin={{ left: 0, right: 8, top: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis dataKey="data" tickFormatter={curta} tick={eixo} minTickGap={30} />
                 <YAxis tick={eixo} width={56} />
-                <Tooltip {...dica} labelFormatter={(d) => fmtData(String(d))} formatter={(v: number) => `${fmtNum(v)} ${p.unidade}`} />
+                <Tooltip {...dica} labelFormatter={(d) => fmtData(String(d))} formatter={(v: number | number[]) => (Array.isArray(v) ? `${fmtNum(v[0])} a ${fmtNum(v[1])} ${p.unidade}` : `${fmtNum(v)} ${p.unidade}`)} />
                 {p.estoqueMinimo !== null && <ReferenceLine y={p.estoqueMinimo} stroke="var(--critico)" strokeDasharray="4 4" />}
                 <ReferenceLine x={analise.dataReferencia} stroke="var(--muted)" label={{ value: "hoje", fontSize: 12, fill: "var(--muted)", position: "top" }} />
                 <Line type="stepAfter" dataKey="saldo" name="Saldo" stroke="var(--brand)" dot={false} strokeWidth={2} />
-                <Line type="linear" dataKey="projecao" name="Projeção" stroke="var(--monitorar)" strokeDasharray="6 4" dot={false} strokeWidth={2} />
-              </LineChart>
+                <Area type="linear" dataKey="faixa" name="Faixa do modelo (80%)" stroke="none" fill="var(--ouro-claro)" fillOpacity={0.35} connectNulls />
+                <Line type="linear" dataKey="projecao" name="Projeção pela média" stroke="var(--monitorar)" strokeDasharray="6 4" dot={false} strokeWidth={2} connectNulls />
+                <Line type="linear" dataKey="modelo" name="Previsão do modelo" stroke="var(--ouro-escuro)" dot={false} strokeWidth={2.5} connectNulls />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </Card>

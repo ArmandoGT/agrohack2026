@@ -37,7 +37,7 @@
 |---|---|
 | **Painel do dia** | Alertas ordenados por prioridade (Crítico, Atenção, Monitorar), resumo para o gestor, filtros |
 | **Produtos** | Saldo, mínimo, consumo/dia, cobertura em dias, valor e curva ABC de cada item |
-| **Ficha do produto** | Gráfico do saldo com **projeção**, consumo semanal, lotes por validade (FEFO), histórico |
+| **Ficha do produto** | Gráfico do saldo com **projeção** e **previsão do modelo com faixa de incerteza**, consumo semanal, lotes por validade (FEFO), histórico |
 | **Registrar entrada ou saída** | Nova entrada ou saída, com **reanálise imediata** e aviso do que mudou (alertas novos, resolvidos ou que mudaram de nível) |
 | **Financeiro** | Curva ABC (Pareto), valor por categoria, dinheiro parado, excesso, variação de preço |
 | **Cadastros duplicados** | Grupos de nomes parecidos (grafo de similaridade); unificar com um clique e a análise é refeita |
@@ -88,9 +88,10 @@ Requisitos: Node.js 20+.
 ```bash
 npm install
 npm run dev          # http://localhost:3000 (abre com a base SIMULADA)
-npm test             # 16 testes unitários (Vitest)
+npm test             # 26 testes unitários (Vitest)
 npm run eval         # loop de avaliação → docs/eval-report.md
 npm run eval:robustez # avaliação em 10 bases simuladas diferentes
+npm run eval:previsao # backtest do modelo de previsão → docs/eval-previsao.md
 npm run gerar-dados  # recria data/simulado.csv e o gabarito
 npm run build && npm start
 ```
@@ -141,13 +142,14 @@ Saída em `video/` (fora do Git): `agrosentinela-demo.mp4` (1920×1080, H.264, 3
 
 ## 7. Validação
 
-O plano de teste completo, com o oráculo de cada parte e os casos de caminho feliz e de erro, está em [`TESTING.md`](TESTING.md). Separamos três perguntas diferentes, porque cada uma tem uma prova diferente:
+O plano de teste completo, com o oráculo de cada parte e os casos de caminho feliz e de erro, está em [`TESTING.md`](TESTING.md). Separamos quatro perguntas diferentes, porque cada uma tem uma prova diferente:
 
 1. **Cada regra faz o que promete?** Sim, e isso é medido. O loop de avaliação planta situações conhecidas na base simulada e compara os alertas com o gabarito: **recall de 100% e precisão de 100%** na base principal. Detalhes em [`docs/eval-report.md`](docs/eval-report.md).
 2. **As regras funcionam fora da base em que foram ajustadas?** O mesmo loop roda em 10 bases geradas com sementes diferentes: média de **recall de 100% e precisão de 98,9%**. Os falsos positivos estão listados no relatório.
-3. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md).
+3. **O modelo de previsão é melhor que a média simples?** Medimos em vez de supor. Para cada produto, escondemos as últimas 4 semanas (em até 3 rodadas), ajustamos o modelo sem elas e comparamos com o consumo real. Nas 10 bases simuladas, o modelo erra **6,2% menos** que a média de 30 dias (WAPE de 27,3% contra 29,1%), e a faixa de 80% contém o consumo real em 87,3% das rodadas. O ganho é pequeno, e por isso **o modelo só aparece no produto em que venceu a média com folga de 5%**: nos demais, a ficha diz que a média foi melhor. Detalhes em [`docs/eval-previsao.md`](docs/eval-previsao.md).
+4. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md).
 
-Também temos **18 testes automatizados** (leitura, unidades, valores ausentes, grafo de duplicados, DAG, detectores, meta do eval e a demonstração de reanálise). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
+Também temos **26 testes automatizados** (leitura, unidades, valores ausentes, grafo de duplicados, DAG, detectores, meta do eval, a demonstração de reanálise e o modelo de previsão, inclusive a garantia de que ele não altera nenhum alerta). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
 
 ### O que funciona
 
@@ -155,12 +157,14 @@ Também temos **18 testes automatizados** (leitura, unidades, valores ausentes, 
 - Os 10 detectores, a prioridade de 0 a 100 e a confiança de cada alerta, com o "Como calculamos?" em cada card.
 - Reanálise imediata ao registrar uma movimentação ou unificar cadastros, com aviso do que mudou.
 - Painel do dia, ficha do produto com projeção, financeiro (curva ABC) e versão para celular.
+- **Modelo de previsão de consumo** (suavização exponencial de Holt), ajustado a cada produto no navegador, com faixa de incerteza e o resultado do próprio teste na ficha. Ele só é mostrado onde venceu a média.
 - Publicado online, sem login: https://agrohack-agrosentinela.netlify.app
 
 ### O que ainda pode melhorar
 
 - **Medir os alertas na base oficial** e revisar manualmente os 20 primeiros, assim que ela for divulgada.
 - **Calibrar os limiares com quem trabalha no campo.** Por exemplo: o prazo de compra de 15 dias e a sazonalidade de sementes e calcário, que hoje podem gerar "excesso" fora da safra.
+- **Previsão:** validar o modelo na base oficial, tratar a sazonalidade de safra e o consumo muito intermitente (método de Croston) e, depois de validado, usar a previsão também nos alertas. Hoje os alertas usam só a média.
 - **Testes automatizados de interface** (hoje a interface é testada pelos casos manuais do `TESTING.md`).
 - **Várias fazendas no mesmo painel**, para cooperativas e revendas, com login e regras de acesso por fazenda.
 - **Limitações das estimativas:** ver a seção "Limites" em [`docs/criterios-alertas.md`](docs/criterios-alertas.md). Segurança e dependências estão em [`SECURITY.md`](SECURITY.md).
@@ -169,6 +173,7 @@ Também temos **18 testes automatizados** (leitura, unidades, valores ausentes, 
 
 - **Stack:** Next.js 15 (React 19, TypeScript), Tailwind CSS 4, Recharts, PapaParse, SheetJS (xlsx), Supabase (opcional), Vitest e GitHub Actions.
 - **Motor de análise:** TypeScript puro, sem dependências, em `src/lib/engine/`. É organizado como um **grafo acíclico de etapas (DAG)**, e cada detector é um nó.
+- **Modelo de previsão:** suavização exponencial de Holt com tendência amortecida (`src/lib/engine/previsao.ts`). Os parâmetros são aprendidos do histórico de cada produto, e tudo roda no navegador. Não usamos modelos de linguagem (LLM), e nenhum dado sai do computador.
 - **Uso de IA:** declarado em [`IA.md`](IA.md): ferramentas, como trabalhamos (plano aprovado antes do código), erros da IA que pegamos e corrigimos e o que a equipe decidiu.
 - **Segurança:** verificação executada e limitações em [`SECURITY.md`](SECURITY.md).
 
