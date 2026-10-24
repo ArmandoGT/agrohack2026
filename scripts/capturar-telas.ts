@@ -1,6 +1,6 @@
 // npm run capturar-telas — gera as imagens da seção "Telas" do README em docs/img/.
 // npm run capturar-telas -- pitch — gera as telas da apresentação em public/pitch/ e grava em
-//   src/app/pitch/focos.json onde fica cada ponto destacado pelo zoom dos slides.
+//   src/app/pitch/focos.json o tamanho de cada tela e as paradas do zoom dos slides (em px CSS).
 // Requer o app rodando (npm run build && npm start) e o Microsoft Edge (ou Chrome/Chromium,
 // indicado em EDGE_PATH). Usa o protocolo de depuração do navegador (CDP) direto, sem dependências extras.
 
@@ -90,14 +90,20 @@ async function main() {
     writeFileSync(join(SAIDA, `${nome}.png`), Buffer.from(data ?? "", "base64"));
     console.log(`${PITCH ? "public/pitch" : "docs/img"}/${nome}.png`);
   }
-  /** Caixa do elemento na tela, em % da imagem, com uma pequena folga. */
-  async function caixa(expressaoElemento: string, folga = 10): Promise<Caixa> {
-    const r = (await avaliar(`(() => { const r = (${expressaoElemento}).getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; })()`)) as number[];
-    const { width: W, height: H } = telaAtual;
-    const x = Math.max(0, r[0] - folga), y = Math.max(0, r[1] - folga);
-    const w = Math.min(W - x, r[2] + 2 * folga), h = Math.min(H - y, r[3] + 2 * folga);
-    const pct = (v: number, t: number) => Math.round((v / t) * 1000) / 10;
-    return { x: pct(x, W), y: pct(y, H), w: pct(w, W), h: pct(h, H) };
+  /**
+   * Caixa (em px CSS da imagem) que envolve um elemento ou uma lista deles, com uma pequena folga.
+   * Com `dentro`, a caixa é relativa a esse elemento (para recortes como o card de alerta).
+   */
+  async function caixa(expressao: string, folga = 10, dentro?: string): Promise<Caixa> {
+    const [x0, y0, x1, y1, ox, oy, W, H] = (await avaliar(`(() => {
+      const els = [].concat(${expressao});
+      const rs = els.map((e) => e.getBoundingClientRect());
+      const o = ${dentro ? `(${dentro}).getBoundingClientRect()` : `{ left: 0, top: 0, width: innerWidth, height: innerHeight }`};
+      return [Math.min(...rs.map((r) => r.left)), Math.min(...rs.map((r) => r.top)), Math.max(...rs.map((r) => r.right)), Math.max(...rs.map((r) => r.bottom)), o.left, o.top, o.width, o.height];
+    })()`)) as number[];
+    const x = Math.max(0, x0 - ox - folga), y = Math.max(0, y0 - oy - folga);
+    const w = Math.min(W - x, x1 - x0 + 2 * folga), h = Math.min(H - y, y1 - y0 + 2 * folga);
+    return { x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h) };
   }
   /** Recorte de um elemento da página (em px CSS; a escala 2× vem da emulação). */
   async function recortar(nome: string, expressaoElemento: string) {
@@ -143,25 +149,37 @@ async function main() {
     }
 
     // ---- Telas do pitch (public/pitch), cada uma no mesmo estado das versões anteriores ----
-    const focos: Record<string, Caixa> = {};
+    // focos.json guarda, para cada imagem, o tamanho em px CSS e as paradas da câmera dos slides.
+    const focos: Record<string, { tam: [number, number]; focos: Record<string, Caixa> }> = {};
+    const tela = (nome: string, tam: [number, number] = [telaAtual.width, telaAtual.height]): Record<string, Caixa> => (focos[nome] = { tam, focos: {} }).focos;
     const cardDiesel = `__card("Óleo diesel S10 · Estoque crítico", "article")`;
 
     await abrir("/", SLIDE);
-    focos.painel = await caixa(`document.querySelector('section[aria-label="Resumo"] > div')`);
+    let f = tela("painel");
+    f.resumo = await caixa(`document.querySelector('section[aria-label="Resumo para o gestor"]')`);
+    f.niveis = await caixa(`document.querySelector('section[aria-label="Resumo"] > div')`);
+    f.indicadores = await caixa(`document.querySelector('section[aria-label="Resumo"]')`);
     await capturar("painel");
     await abrir("/", CARTAO);
     await recortar("alerta-diesel", cardDiesel);
     await avaliar(`__botao("Como calculamos?", ${cardDiesel}).click()`);
     await espera(300);
     await recortar("alerta-diesel-metodo", cardDiesel);
+    const [cw, ch] = (await avaliar(`(() => { const r = ${cardDiesel}.getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; })()`)) as number[];
+    f = tela("alerta-diesel-metodo", [cw, ch]);
+    f.alerta = await caixa(`[...${cardDiesel}.children].slice(0, 3)`, 10, cardDiesel);
+    f.fazer = await caixa(`[...${cardDiesel}.querySelectorAll("p")].find((p) => p.textContent.startsWith("O que fazer"))`, 10, cardDiesel);
+    f.confianca = await caixa(`${cardDiesel}.querySelector("dl")`, 10, cardDiesel);
 
     const ficha = await avaliar(`[...document.querySelectorAll('a[href^="/produtos/"]')].find(a => a.textContent.includes('diesel'))?.getAttribute('href')`);
     await abrir(typeof ficha === "string" ? ficha : "/produtos", SLIDE);
-    focos.diesel = await caixa(`__card("Dura até")`);
+    f = tela("diesel");
+    f.saldo = await caixa(`[...document.querySelector("main section.grid").children].slice(0, 3)`);
+    f.duraAte = await caixa(`__card("Dura até")`);
     await capturar("diesel");
     await avaliar(`(() => { const e = __card("Saldo ao longo do tempo"); scrollTo(0, e.getBoundingClientRect().top + scrollY - 24); })()`);
     await espera(800);
-    focos["diesel-graficos"] = await caixa(`__card("Consumo por semana")`);
+    tela("diesel-graficos").consumo = await caixa(`__card("Consumo por semana")`);
     await capturar("diesel-graficos");
 
     await abrir("/financeiro", SLIDE); await capturar("financeiro");
@@ -170,12 +188,12 @@ async function main() {
 
     await abrir("/cadastros", SLIDE);
     const grupoKcl = `__card("KCl", "div.rounded-lg")`;
-    focos.cadastros = await caixa(grupoKcl);
+    tela("cadastros").kcl = await caixa(grupoKcl);
     await capturar("cadastros");
     await avaliar(`__botao("Unificar", ${grupoKcl}).click()`);
     for (let i = 0; i < 20 && !(await avaliar(`!!document.querySelector('[role=status]')`)); i++) await espera(250);
     await espera(800);
-    focos["cadastros-unificado"] = await caixa(`document.querySelector('[role=status]')`, 8);
+    tela("cadastros-unificado").aviso = await caixa(`document.querySelector('[role=status]')`, 8);
     await capturar("cadastros-unificado");
 
     // Demo de registro sobre a base sem a unificação acima.
@@ -183,7 +201,7 @@ async function main() {
     await preencherRetirada(SLIDE);
     await capturar("registrar");
     await salvarRetirada();
-    focos["registrar-novo"] = await caixa(`document.querySelector('[role=status]')`, 8);
+    tela("registrar-novo").aviso = await caixa(`document.querySelector('[role=status]')`, 8);
     await capturar("registrar-novo");
     await abrir("/", SLIDE); await capturar("painel-depois");
 

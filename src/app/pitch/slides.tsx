@@ -2,7 +2,7 @@
 
 // Slides do pitch (roteiro em docs/pitch.md). Cada slide é um componente de 1920×1080;
 // as telas reais ficam em public/pitch/ (capturas do app rodando com a base simulada) e
-// focos.json diz onde fica o ponto destacado em cada uma (os dois saem de `npm run capturar-telas -- pitch`).
+// focos.json guarda o tamanho de cada uma e as paradas da câmera (os dois saem de `npm run capturar-telas -- pitch`).
 //
 // Identidade "Iluminura", a mesma do app: pergaminho e marfim, folha de ouro, cinabre, ultramarino
 // e verde-terra; EB Garamond nos títulos e Source Sans 3 no texto. Os slides escuros são um
@@ -13,7 +13,7 @@
 // (o MotionConfig da Apresentacao desliga os transforms; aqui desligamos traços, recortes e zoom).
 
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import FOCOS from "./focos.json";
 
 export const C = {
@@ -192,74 +192,97 @@ function Arco({ largura, alturaArco = 96, atraso = 0.2, tema = "noite", rotulo, 
   );
 }
 
-type Etapa = { src: string; alt: string; foco?: Foco; zoom?: number; dura?: number };
+// ---------- tela real com zoom ----------
+// O print fica dentro do arco, no lugar de sempre, e vai se aprofundando dentro do próprio quadro:
+// cada → (ou o passador) aproxima o próximo ponto falado; depois da última parada, → passa o slide.
+// ↑ volta uma parada. Nada avança sozinho: o ritmo é o da fala.
 
-/**
- * Tela real do sistema dentro do arco. Depois que o arco abre, aproxima o ponto que está sendo
- * falado e desenha um filete de ouro em volta dele. Com várias etapas: afasta, troca a imagem e
- * aproxima o novo ponto. Com movimento reduzido: sem zoom, só o destaque aparecendo.
- */
-function Tela({ etapas, largura = 1150, atraso = 1.9 }: { etapas: Etapa[]; largura?: number; atraso?: number }) {
+type Focos = Record<string, { tam: number[]; focos: Record<string, Foco> }>;
+const TELAS = FOCOS as Focos;
+
+/** Controle que a Apresentacao usa para avançar/voltar o zoom do slide atual pelo teclado. */
+export type ControleCamera = { avancar: () => boolean; voltar: () => boolean };
+export const CameraCtx = createContext<RefObject<ControleCamera | null> | null>(null);
+
+/** Ponto a aproximar (nome em focos.json); `tela` troca a imagem nessa parada. */
+type Parada = { foco: string; tela?: string };
+
+const ZOOM_MAX = 3; // as capturas são 2×: até 3× ainda fica nítido no projetor
+
+function Tela({ tela, alt, paradas = [], largura = 1150, atraso = 0.2, alturaArco, rotulo = "agrosentinela · tela real do sistema" }: {
+  tela: string; alt: string; paradas?: Parada[]; largura?: number; atraso?: number; alturaArco?: number; rotulo?: string;
+}) {
   const reduz = useReduz();
-  const lista = useRef(etapas).current;
-  const [img, setImg] = useState(0);
-  const [perto, setPerto] = useState(false);
-  const [chegou, setChegou] = useState(false);
+  const controle = useContext(CameraCtx);
+  const n = paradas.length;
+  const [fase, setFase] = useState(-1); // -1: print inteiro · 0..n-1: paradas
+  const faseRef = useRef(fase);
+  useEffect(() => { faseRef.current = fase; }, [fase]);
+  const [chegouEm, setChegouEm] = useState(-2); // parada em que o zoom já pousou (o filete só aparece aí)
 
   useEffect(() => {
-    const ts: ReturnType<typeof setTimeout>[] = [];
-    let t = atraso;
-    lista.forEach((e, k) => {
-      if (k > 0) {
-        ts.push(setTimeout(() => { setChegou(false); setPerto(false); }, t * 1000));
-        t += 0.8;
-        ts.push(setTimeout(() => setImg(k), t * 1000));
-        t += 0.6;
-      }
-      ts.push(setTimeout(() => setPerto(true), t * 1000));
-      t += e.dura ?? 3.6;
-    });
-    return () => ts.forEach(clearTimeout);
-  }, [lista, atraso]);
+    if (!controle || n === 0) return;
+    const meu: ControleCamera = {
+      avancar: () => (faseRef.current < n - 1 ? (setFase(++faseRef.current), true) : false),
+      voltar: () => (faseRef.current > -1 ? (setFase(--faseRef.current), true) : false),
+    };
+    controle.current = meu;
+    return () => { if (controle.current === meu) controle.current = null; };
+  }, [controle, n]);
 
-  const e = lista[img];
-  const zoom = perto && !reduz && e.foco;
-  // Zoom que leva o centro do foco ao centro da janela, sem deixar a imagem sair da moldura.
-  const s = zoom && e.foco ? Math.min(e.zoom ?? 1.6, 88 / e.foco.w, 88 / e.foco.h) : 1;
-  const desloca = (centro: number) => Math.max(100 - 100 * s, Math.min(0, 50 - centro * s));
-  const tx = zoom && e.foco ? desloca(e.foco.x + e.foco.w / 2) : 0;
-  const ty = zoom && e.foco ? desloca(e.foco.y + e.foco.h / 2) : 0;
-  const mostrar = e.foco && (reduz ? perto : chegou);
-  // Destaque desenhado em px reais da janela (sem esticar o SVG, para o traço ficar contínuo).
-  const VW = largura - 6, VH = (VW * 10) / 16;
-  const r = e.foco && { x: ((e.foco.x * s + tx) * VW) / 100, y: ((e.foco.y * s + ty) * VH) / 100, w: (e.foco.w * s * VW) / 100, h: (e.foco.h * s * VH) / 100 };
-  const traco = useTraco(0.05, 0.75);
+  const tam = TELAS[tela].tam;
+  const W = largura - 6, H = (W * tam[1]) / tam[0]; // quadro dentro das bordas do arco
+  const base = W / tam[0];
+  const parada = fase >= 0 ? paradas[fase] : null;
+  const atual = parada?.tela ?? (fase >= 0 ? [...paradas.slice(0, fase + 1)].reverse().find((p) => p.tela)?.tela : undefined) ?? tela;
+  const foco = parada ? TELAS[atual].focos[parada.foco] : null;
+
+  // Zoom que enquadra o foco no quadro, sem deixar a imagem sair da moldura.
+  let s = base, x = 0, y = 0;
+  if (foco) {
+    s = base * Math.min((0.97 * tam[0]) / foco.w, (0.88 * tam[1]) / foco.h, ZOOM_MAX);
+    const limita = (v: number, total: number, janela: number) => Math.min(0, Math.max(janela - total * s, v));
+    x = limita(W / 2 - (foco.x + foco.w / 2) * s, tam[0], W);
+    y = limita(H / 2 - (foco.y + foco.h / 2) * s, tam[1], H);
+  }
+  const r = foco && { x: foco.x * s + x, y: foco.y * s + y, w: foco.w * s, h: foco.h * s };
+  const traco = useTraco(0.05, 0.7);
+  const telas = [tela, ...paradas.map((p) => p.tela).filter((t): t is string => !!t && t !== tela)];
 
   return (
-    <Arco largura={largura} rotulo="agrosentinela · tela real do sistema">
-      <div style={{ position: "relative", overflow: "hidden", aspectRatio: "16 / 10" }}>
-        <motion.div
-          animate={{ scale: s, x: `${tx}%`, y: `${ty}%` }}
-          transition={{ duration: perto ? 1.3 : 0.7, ease: EASE }}
-          onAnimationComplete={() => perto && setChegou(true)}
-          style={{ position: "absolute", inset: 0, transformOrigin: "0% 0%" }}
-        >
-          {lista.map((x, k) => (
-            <motion.img key={x.src} src={x.src} alt={k === img ? x.alt : ""} draggable={false} initial={false} animate={{ opacity: k === img ? 1 : 0 }} transition={{ duration: 0.5 }}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-          ))}
-        </motion.div>
-        <AnimatePresence>
-          {mostrar && r && (
-            <motion.svg key={img} viewBox={`0 0 ${VW} ${VH}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.4 }}
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }} aria-hidden>
-              <path d={`M0 0H${VW}V${VH}H0Z M${r.x} ${r.y}h${r.w}v${r.h}h${-r.w}Z`} fillRule="evenodd" fill="rgba(14,21,40,.45)" />
-              <motion.rect x={r.x} y={r.y} width={r.w} height={r.h} rx={8} fill="none" stroke={C.ouro} strokeWidth={4} {...traco} />
-            </motion.svg>
-          )}
-        </AnimatePresence>
-      </div>
-    </Arco>
+    <div style={{ position: "relative" }}>
+      <Arco largura={largura} atraso={atraso} alturaArco={alturaArco} rotulo={rotulo}>
+        <div style={{ position: "relative", overflow: "hidden", width: W, height: H }}>
+          <motion.div
+            initial={false}
+            animate={{ x, y, scale: s }}
+            transition={{ duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
+            onAnimationComplete={() => setChegouEm(faseRef.current)}
+            style={{ position: "absolute", left: 0, top: 0, width: tam[0], height: tam[1], transformOrigin: "0 0" }}
+          >
+            {telas.map((t, k) => (
+              <motion.img key={t} src={`/pitch/${t}.png`} alt={t === atual ? alt : ""} draggable={false} initial={false} animate={{ opacity: t === atual ? 1 : 0 }} transition={{ duration: k === 0 ? 0 : 0.5 }}
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }} />
+            ))}
+          </motion.div>
+          <AnimatePresence>
+            {r && (chegouEm === fase || reduz) && (
+              <motion.svg key={fase} width={W} height={H} viewBox={`0 0 ${W} ${H}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.2 } }} transition={{ duration: 0.35 }}
+                style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }} aria-hidden>
+                <path d={`M0 0H${W}V${H}H0Z M${r.x} ${r.y}h${r.w}v${r.h}h${-r.w}Z`} fillRule="evenodd" fill="rgba(14,21,40,.38)" />
+                <motion.rect x={r.x} y={r.y} width={r.w} height={r.h} rx={8} fill="none" stroke={C.ouro} strokeWidth={4} {...traco} />
+              </motion.svg>
+            )}
+          </AnimatePresence>
+        </div>
+      </Arco>
+      {/* Paradas do zoom, discretas, para o apresentador saber quantos → faltam */}
+      {n > 0 && (
+        <div aria-hidden style={{ position: "absolute", right: 6, bottom: -30, display: "flex", gap: 10 }}>
+          {paradas.map((p, k) => <Losango key={p.foco + k} cor={k <= fase ? C.ouro : "rgba(212,175,90,.3)"} tam={10} />)}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -272,7 +295,9 @@ function Rodape({ tema = "noite" }: { tema?: Tema }) {
 }
 
 /** Slide de "momento da demo": número grande à esquerda, tela real à direita. */
-function Momento({ n, numero, legenda, etapas, tamanho = 170 }: { n: number; numero: ReactNode; legenda: ReactNode; etapas: Etapa[]; tamanho?: number }) {
+function Momento({ n, numero, legenda, tela, alt, paradas, tamanho = 170 }: {
+  n: number; numero: ReactNode; legenda: ReactNode; tela: string; alt: string; paradas: Parada[]; tamanho?: number;
+}) {
   return (
     <Base>
       <div style={{ position: "absolute", left: 128, top: 128, width: 470, display: "flex", flexDirection: "column", gap: 26 }}>
@@ -284,7 +309,7 @@ function Momento({ n, numero, legenda, etapas, tamanho = 170 }: { n: number; num
         <Entra atraso={0.6}><p style={{ fontSize: 34, lineHeight: 1.4, color: C.marfim, margin: 0 }}>{legenda}</p></Entra>
       </div>
       <div style={{ position: "absolute", right: 128, top: 140 }}>
-        <Tela etapas={etapas} />
+        <Tela tela={tela} alt={alt} paradas={paradas} />
       </div>
       <Rodape />
     </Base>
@@ -447,10 +472,8 @@ function Ideia() {
         ))}
       </div>
       <div style={{ position: "absolute", left: 1152, top: 400 }}>
-        <Arco largura={640} alturaArco={74} atraso={0.6}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/pitch/alerta-diesel-metodo.png" alt="Alerta real do sistema: Óleo diesel S10, estoque crítico, com critério e confiança" style={{ width: "100%", display: "block" }} />
-        </Arco>
+        <Tela tela="alerta-diesel-metodo" alt="Alerta real do sistema: Óleo diesel S10, estoque crítico, com critério e confiança"
+          largura={640} alturaArco={74} atraso={0.6} rotulo="" paradas={[{ foco: "alerta" }, { foco: "fazer" }, { foco: "confianca" }]} />
       </div>
     </Base>
   );
@@ -476,7 +499,7 @@ function Painel() {
         </div>
       </div>
       <div style={{ position: "absolute", right: 128, top: 140 }}>
-        <Tela etapas={[{ src: "/pitch/painel.png", alt: "Painel do dia real do sistema", foco: FOCOS.painel, zoom: 1.75 }]} atraso={2.2} />
+        <Tela tela="painel" alt="Painel do dia real do sistema" paradas={[{ foco: "resumo" }, { foco: "indicadores" }]} />
       </div>
       <Rodape />
     </Base>
@@ -484,30 +507,27 @@ function Painel() {
 }
 
 const Momento1 = () => (
-  <Momento n={1} numero={<><Contador ate={9} /> dias</>}
+  <Momento n={1} numero={<><Contador ate={9} /> dias</>} tela="diesel" alt="Ficha do óleo diesel S10"
     legenda={<>é quanto o diesel dura no ritmo atual. O prazo de compra é de 15 dias: <b style={{ color: C.ouroClaro }}>já passou da hora de comprar.</b></>}
-    etapas={[{ src: "/pitch/diesel.png", alt: "Ficha do óleo diesel S10", foco: FOCOS.diesel, zoom: 2.1 }]} />
+    paradas={[{ foco: "saldo" }, { foco: "duraAte" }]} />
 );
 
 const Momento2 = () => (
-  <Momento n={2} numero={<><Contador ate={87} prefixo="+" sufixo="%" /></>}
+  <Momento n={2} numero={<><Contador ate={87} prefixo="+" sufixo="%" /></>} tela="diesel-graficos" alt="Gráfico de consumo semanal do diesel subindo"
     legenda={<>de consumo de diesel em 4 meses. <b style={{ color: C.ouroClaro }}>Quem olhasse a média do ano acharia que está tudo bem.</b></>}
-    etapas={[{ src: "/pitch/diesel-graficos.png", alt: "Gráfico de consumo semanal do diesel subindo", foco: FOCOS["diesel-graficos"], zoom: 1.65 }]} />
+    paradas={[{ foco: "consumo" }]} />
 );
 
 const Momento3 = () => (
-  <Momento n={3} numero="1 clique" tamanho={130}
+  <Momento n={3} numero="1 clique" tamanho={130} tela="cadastros" alt="Sugestão de cadastro duplicado KCl"
     legenda={<>“KCl” e “Cloreto de potássio” eram o mesmo adubo. Unificou, a análise foi refeita e <b style={{ color: C.ouroClaro }}>o alarme falso sumiu sozinho.</b></>}
-    etapas={[
-      { src: "/pitch/cadastros.png", alt: "Sugestão de cadastro duplicado KCl", foco: FOCOS.cadastros, zoom: 1.7, dura: 3.6 },
-      { src: "/pitch/cadastros-unificado.png", alt: "Aviso de alertas resolvidos após unificar", foco: FOCOS["cadastros-unificado"], zoom: 1.5 },
-    ]} />
+    paradas={[{ foco: "kcl" }, { foco: "aviso", tela: "cadastros-unificado" }]} />
 );
 
 const Momento4 = () => (
-  <Momento n={4} numero={<><Contador ate={170} dur={1.2} /> L</>}
+  <Momento n={4} numero={<><Contador ate={170} dur={1.2} /> L</>} tela="registrar-novo" alt="Aviso de novo alerta de atenção após registrar retirada"
     legenda={<>de glifosato retirados de uma vez. Salvou, o sistema refez tudo e <b style={{ color: C.ouroClaro }}>avisou na hora: Novo · Atenção · Vai faltar em breve.</b></>}
-    etapas={[{ src: "/pitch/registrar-novo.png", alt: "Aviso de novo alerta de atenção após registrar retirada", foco: FOCOS["registrar-novo"], zoom: 1.5 }]} />
+    paradas={[{ foco: "aviso" }]} />
 );
 
 function Perguntas() {

@@ -4,7 +4,7 @@
 >
 > A AgroSentinela transforma os registros de entradas e saídas do estoque em **alertas priorizados e justificados**. Cada alerta diz **o quê** está acontecendo, **por quê**, **o que fazer** e **quanto dá para confiar** na estimativa.
 
-**Link da solução:** _(preencher após o deploy na Vercel)_ · **Vídeo demonstrativo:** _(preencher)_ · **Versão avaliada:** tag `v1.0-entrega`
+**Link da solução:** [agrohack-agrosentinela.netlify.app](https://agrohack-agrosentinela.netlify.app) (slides do pitch em [`/pitch`](https://agrohack-agrosentinela.netlify.app/pitch)) · **Vídeo demonstrativo:** _(preencher)_ · **Versão avaliada:** tag `v1.0-entrega`
 
 ---
 
