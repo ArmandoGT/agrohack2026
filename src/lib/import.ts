@@ -12,7 +12,14 @@ export function lerCsv(texto: string): ResultadoImportacao {
   return normalizarLinhas(r.data);
 }
 
+// Limite de tamanho: uma base de estoque real tem poucos MB, e o leitor de planilhas
+// é a parte mais exposta a arquivos maliciosos (ver SECURITY.md).
+export const TAMANHO_MAXIMO_MB = 15;
+
 export async function lerArquivo(arquivo: File): Promise<ResultadoImportacao> {
+  if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
+    throw new Error(`O arquivo tem ${(arquivo.size / 1024 / 1024).toFixed(1)} MB; o limite é ${TAMANHO_MAXIMO_MB} MB.`);
+  }
   if (/\.(xlsx|xls)$/i.test(arquivo.name)) {
     const XLSX = await import("xlsx");
     const wb = XLSX.read(await arquivo.arrayBuffer(), { type: "array", cellDates: true });

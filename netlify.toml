@@ -9,3 +9,13 @@
 # Adaptador oficial do Next.js (rotas, páginas dinâmicas e imagens). Sem ele, a Netlify publica .next cru e tudo dá 404.
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Cabeçalhos de segurança (ver SECURITY.md). Sem CSP por enquanto: o Next.js injeta scripts inline.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains"
