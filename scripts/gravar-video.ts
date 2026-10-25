@@ -389,19 +389,30 @@ async function main() {
       await titulo("Óleo diesel S10").waitFor();
       await espera(1200);
       await apontar(main.getByText("Dura até").first(), 900);
-      await espera(3500);
+      await espera(2500);
+      // A narração diz que o modelo confirma a data da média: confere antes de gravar o resto.
+      const modelo = main.locator("div", { has: page.getByRole("heading", { name: "Previsão do modelo" }) }).last();
+      const data = (t: string) => t.match(/\d{2}\/\d{2}/)?.[0];
+      const dataMedia = data(await main.getByText("Dura até").first().locator("..").innerText());
+      const dataModelo = data(await modelo.getByText("deve zerar por volta de").innerText());
+      if (!dataModelo || dataModelo !== dataMedia) throw new Error(`A previsão do modelo (${dataModelo}) não confirma a data da média (${dataMedia})`);
+      await rolarAte(modelo, 90, 1200);
+      await apontar(modelo.getByText("deve zerar por volta de"), 900);
+      await espera(2500);
+      await apontar(modelo.getByText(/^Teste:/), 900);
+      await espera(2000);
       const saldo = main.locator("div", { has: page.getByRole("heading", { name: "Saldo ao longo do tempo" }) }).last();
       await rolarAte(page.getByRole("heading", { name: "Saldo ao longo do tempo" }), 90, 1500);
       const grafico = saldo.locator(".recharts-surface").first();
       const { b } = await centro(grafico);
       await moverPara(b.x + b.width * 0.2, b.y + b.height * 0.5, 900);
       await moverPara(b.x + b.width * 0.85, b.y + b.height * 0.5, 3000); // percorre a linha: dica com o saldo de cada dia
-      await espera(1500);
+      await espera(800);
       await rolarAte(page.getByRole("heading", { name: "Consumo por semana" }), 90, 1500);
       const barras = main.locator("div", { has: page.getByRole("heading", { name: "Consumo por semana" }) }).last().locator(".recharts-surface").first();
       const c2 = (await centro(barras)).b;
       await moverPara(c2.x + c2.width * 0.3, c2.y + c2.height * 0.55, 900);
-      await moverPara(c2.x + c2.width * 0.9, c2.y + c2.height * 0.55, 2500);
+      await moverPara(c2.x + c2.width * 0.9, c2.y + c2.height * 0.55, 1800);
     });
 
     await gravarCena(4, async () => {
@@ -484,9 +495,11 @@ async function main() {
       await titulo("Como funciona").waitFor();
       await espera(1500);
       await rolarAte(page.getByRole("heading", { name: /Pipeline de análise/ }), 90, 1500);
-      await espera(4500);
-      await rolarAte(page.getByRole("heading", { name: /Critérios de cada alerta/ }), 90, 1500);
-      await espera(3000);
+      await espera(3500);
+      await rolarAte(page.getByRole("heading", { name: /Previsão de consumo \(modelo\)/ }), 90, 1300);
+      await espera(3500);
+      await rolarAte(page.getByRole("heading", { name: /Critérios de cada alerta/ }), 90, 1300);
+      await espera(2500);
       await avaliar("__rolar(scrollY + 380, 3000)");
     });
 
