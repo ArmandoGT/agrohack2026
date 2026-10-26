@@ -4,7 +4,7 @@
 >
 > A AgroSentinela transforma os registros de entradas e saídas do estoque em **alertas priorizados e justificados**. Cada alerta diz **o quê** está acontecendo, **por quê**, **o que fazer** e **quanto dá para confiar** na estimativa.
 
-**Link da solução:** [agrohack-agrosentinela.netlify.app](https://agrohack-agrosentinela.netlify.app) (slides do pitch em [`/pitch`](https://agrohack-agrosentinela.netlify.app/pitch)) · **Vídeo demonstrativo:** _(preencher)_ · **Versão avaliada:** tag `v1.0-entrega`
+**Link da solução:** [agrohack-agrosentinela.netlify.app](https://agrohack-agrosentinela.netlify.app) (slides do pitch em [`/pitch`](https://agrohack-agrosentinela.netlify.app/pitch)) · **Vídeo demonstrativo:** [youtu.be/t3ghbFW5BiI](https://youtu.be/t3ghbFW5BiI) · **Versão avaliada:** tag `v1.0-entrega`
 
 ---
 
@@ -124,7 +124,7 @@ npm run build && npm start
 
 ## 6. Demonstração
 
-- **Vídeo:** _(preencher com o link do vídeo)_. O roteiro está em [`docs/roteiro-video.md`](docs/roteiro-video.md).
+- **Vídeo:** [youtu.be/t3ghbFW5BiI](https://youtu.be/t3ghbFW5BiI) (3 min, narrado e legendado). O roteiro está em [`docs/roteiro-video.md`](docs/roteiro-video.md).
 - **Atualização e reanálise:** em *Registrar entrada ou saída*, registre uma retirada de **170 L** de "Herbicida glifosato" na data sugerida (a data de referência da base simulada). Ao salvar, o aviso no canto mostra só "Novo · Atenção · Herbicida glifosato · Vai faltar em breve". O teste `tests/demo.test.ts` garante esse resultado. Com a base simulada, o aviso é o mesmo para retiradas de 120 a 225 L; a partir de 230 L o nível passa a Crítico, e retiradas muito grandes também geram "Estoque crítico" e "Retirada fora do padrão".
 - **Unificação:** em *Cadastros duplicados*, unifique "KCl" com "Cloreto de potássio (KCl)". O alerta falso de ruptura do "KCl" é resolvido na hora.
 
