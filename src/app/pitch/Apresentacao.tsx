@@ -102,7 +102,7 @@ export function Apresentacao() {
         {notas && (
           <div onClick={(e) => e.stopPropagation()} style={{ position: "fixed", left: 16, right: 16, bottom: 16, maxHeight: "38vh", overflow: "auto", background: "rgba(14,21,40,.97)", color: C.marfim, border: `1px solid ${C.ouro}`, borderTop: `4px double ${C.ouro}`, borderRadius: 8, padding: "16px 20px", fontSize: 17, lineHeight: 1.55 }}>
             <div style={{ color: C.ouroClaro, fontWeight: 700, marginBottom: 6 }}>Notas · {slide.titulo} · {slide.tempo}</div>
-            {slide.notas}
+            <div style={{ whiteSpace: "pre-line" }}>{slide.notas}</div>
             <div style={{ marginTop: 10, fontSize: 14, color: C.nevoa }}>→ / espaço / passador: avançar (zoom do print, depois slide) · ↓ ↑: zoom · ←: voltar slide · F: tela cheia · N: esconder notas</div>
           </div>
         )}
