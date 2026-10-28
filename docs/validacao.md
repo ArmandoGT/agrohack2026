@@ -27,7 +27,7 @@ Anomalias plantadas: 17. Cobrem todas as situações da seção 5 do desafio: es
 
 ## 2. Testes unitários
 
-`npm test` roda 16 testes:
+`npm test` roda 26 testes:
 - leitura de números e datas;
 - nulo ≠ zero;
 - mapeamento de colunas;
@@ -40,16 +40,22 @@ Anomalias plantadas: 17. Cobrem todas as situações da seção 5 do desafio: es
 - confiança baixa;
 - retirada atípica;
 - fusão e reanálise;
-- meta do eval.
+- meta do eval;
+- demonstração da reanálise: a retirada de 170 L de glifosato gera só o aviso esperado (`tests/demo.test.ts`);
+- modelo de previsão: semanas, tendência, faixa de incerteza, histórico curto e a garantia de que ele não altera nenhum alerta (`tests/previsao.test.ts`).
 
 ## 3. Validação com a base oficial
 
-_(preencher quando a base oficial for divulgada)_
+**Situação em 27/10/2026:** a organização ainda não tinha divulgado a base oficial do desafio (item 4.2 do regulamento). Por isso, a demonstração usa a base **SIMULADA**, com o aviso fixo no topo do app.
 
-- Linhas importadas e rejeitadas (com motivo):
-- Colunas reconhecidas automaticamente e ajustes necessários:
-- Revisão manual dos 20 primeiros alertas: quantos fazem sentido, quantos são falsos e por quê:
-- Ajustes feitos:
+O app está pronto para recebê-la sem mudança de código:
+- a tela *Importar planilha* aceita CSV ou XLSX e reconhece as colunas pelo nome, com relatório das linhas rejeitadas e do motivo;
+- o motor de análise e o modelo de previsão rodam no navegador sobre qualquer base importada. Os scripts de avaliação (`scripts/eval-*.ts`) leem hoje a base simulada, então precisam receber o caminho do novo arquivo. A base oficial não tem gabarito, por isso nela só faz sentido o backtest de previsão e a revisão manual.
+
+Quando a base sair, os passos são:
+1. registrar as linhas importadas e rejeitadas, e as colunas reconhecidas ou ajustadas;
+2. revisar manualmente os 20 primeiros alertas: quantos fazem sentido, quantos são falsos e por quê;
+3. registrar aqui os ajustes de limiar feitos a partir dessa revisão.
 
 ## 4. Validação com usuários (campo)
 
@@ -81,12 +87,15 @@ _(preencher quando a base oficial for divulgada)_
 
 ### Registro
 
-| Data | Quem (cargo/instituição) | O que mostramos | Frase literal mais forte | O que mudou no produto |
-|---|---|---|---|---|
-| | | | | |
-| | | | | |
-| | | | | |
+**Conversa 1: produtor rural, fazenda da Linha C-45, Ariquemes (RO), outubro de 2026**
 
-### Achado central (para abrir o pitch)
+- **O que mostramos:** a ideia da AgroSentinela. Os registros de entrada e saída viram alertas de falta, vencimento e excesso, com a previsão de quanto tempo o estoque dura.
+- **O que ouvimos** (paráfrase, não é citação literal): a ferramenta seria útil e o ajudaria na gestão da fazenda, e é bom trabalhar com previsibilidade e com dados.
+- **O que isso confirma:** para quem está no campo, o valor está em **antecipar**, e não só em ver o saldo. Isso sustenta duas decisões do produto: dar destaque à cobertura em dias ("o saldo dura cerca de 9 dias") e ao modelo de previsão de consumo.
+- **O que mudou no produto:** nada ainda. O nome do produtor não aparece porque não pedimos consentimento para publicá-lo.
 
-> _(a frase que só quem ouviu o campo saberia, e o que mudamos por causa dela)_
+> **Limitação honesta:** foi uma única conversa, sobre a ideia e sem uso do app. Ela mostra interesse, mas não valida a usabilidade nem os limiares. O próximo passo é mostrar o Painel do dia a esse produtor e a mais duas pessoas, seguindo o roteiro acima, e perguntar principalmente sobre o prazo de compra de 15 dias e a sazonalidade.
+
+### Achado central (para o pitch)
+
+> "Para quem está no campo, o valor é a previsibilidade: saber **antes** que vai faltar." É a síntese da conversa na Linha C-45 e o motivo de cada alerta dizer quantos dias o estoque ainda dura.

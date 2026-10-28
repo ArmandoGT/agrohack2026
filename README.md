@@ -16,8 +16,6 @@
 | Pedro Felipe Vieira Gouveia | ADS, 6º período | Motor de análise e loop de avaliação |
 | Leandro Pires de Moraes Filho | ADS, 6º período | Interface, deploy e vídeo |
 
-> As funções são uma proposta. Ajuste conforme a divisão real de tarefas.
-
 ## 2. Problema e público
 
 **Público:** o responsável pelo almoxarifado ou pela gestão de uma propriedade rural (nossa persona é o "Seu João", gerente da fazenda). Ele registra compras e retiradas, mas não tem tempo de cruzar centenas de lançamentos.
@@ -147,7 +145,7 @@ O plano de teste completo, com o oráculo de cada parte e os casos de caminho fe
 1. **Cada regra faz o que promete?** Sim, e isso é medido. O loop de avaliação planta situações conhecidas na base simulada e compara os alertas com o gabarito: **recall de 100% e precisão de 100%** na base principal. Detalhes em [`docs/eval-report.md`](docs/eval-report.md).
 2. **As regras funcionam fora da base em que foram ajustadas?** O mesmo loop roda em 10 bases geradas com sementes diferentes: média de **recall de 100% e precisão de 98,9%**. Os falsos positivos estão listados no relatório.
 3. **O modelo de previsão é melhor que a média simples?** Medimos em vez de supor. Para cada produto, escondemos as últimas 4 semanas (em até 3 rodadas), ajustamos o modelo sem elas e comparamos com o consumo real. Nas 10 bases simuladas, o modelo erra **6,2% menos** que a média de 30 dias (WAPE de 27,3% contra 29,1%), e a faixa de 80% contém o consumo real em 87,3% das rodadas. O ganho é pequeno, e por isso **o modelo só aparece no produto em que venceu a média com folga de 5%**: nos demais, a ficha diz que a média foi melhor. Detalhes em [`docs/eval-previsao.md`](docs/eval-previsao.md).
-4. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md).
+4. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md). Até agora, apresentamos a ideia a um produtor de uma fazenda da Linha C-45, em Ariquemes. Ele disse que a ferramenta seria útil e que trabalhar com previsibilidade e dados ajudaria na gestão. Foi **uma** conversa sobre a ideia, sem uso do app, e por isso ela confirma o interesse, mas não substitui um teste com usuários.
 
 Também temos **26 testes automatizados** (leitura, unidades, valores ausentes, grafo de duplicados, DAG, detectores, meta do eval, a demonstração de reanálise e o modelo de previsão, inclusive a garantia de que ele não altera nenhum alerta). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
 
@@ -181,12 +179,12 @@ Também temos **26 testes automatizados** (leitura, unidades, valores ausentes, 
 
 - Código desenvolvido pela equipe 3 Hacketeers para o AGROHACK 2026/2, com apoio de IA declarado em `IA.md`.
 - Bibliotecas de terceiros sob suas próprias licenças (MIT/Apache).
-- Licença do código: MIT. A finalidade é acadêmica e demonstrativa, conforme o item 11 do regulamento.
+- Licença do código: MIT (arquivo [`LICENSE`](LICENSE)). A finalidade é acadêmica e demonstrativa, conforme o item 11 do regulamento.
 - Nenhum dado pessoal real nem credencial no repositório. Os nomes na base simulada são fictícios.
 
 ## 10. Versão de entrega
 
-Tag `v1.0-entrega`, commit `_(preencher)_`, criada em `_(data)_`.
+Tag `v1.0-entrega`, criada em 27/10/2026 sobre o último commit da `main`, e publicada também como [release no GitHub](https://github.com/ArmandoGT/agrohack2026/releases/tag/v1.0-entrega). Para conferir o commit avaliado: `git show v1.0-entrega`.
 
 ---
 
