@@ -1,5 +1,7 @@
 # AGROHACK 2026/2 — Plano de Ação da Equipe 3 Hacketeers
 
+> **Registro histórico:** plano escrito em 14/10/2026. Algumas decisões mudaram depois. O deploy final foi na **Netlify**, e não na Vercel. A estrutura de pastas final também é outra (`src/`). O estado final do projeto está no [README](../README.md).
+
 ## Contexto
 - **Evento:** AGROHACK 2026/2, IFRO Campus Ariquemes. **Prêmio de R$ 2.000** para a equipe com a maior nota (de 100 pontos).
 - **Desafio:** "Gestão inteligente de insumos em uma propriedade rural". O objetivo é transformar registros de estoque em **alertas priorizados e justificados** que apoiem decisões. O edital diz explicitamente que *não* quer apenas um CRUD de entradas e saídas.
