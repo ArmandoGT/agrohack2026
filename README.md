@@ -128,18 +128,6 @@ npm run build && npm start
 - **Atualização e reanálise:** em *Registrar entrada ou saída*, registre uma retirada de **170 L** de "Herbicida glifosato" na data sugerida (a data de referência da base simulada). Ao salvar, o aviso no canto mostra só "Novo · Atenção · Herbicida glifosato · Vai faltar em breve". O teste `tests/demo.test.ts` garante esse resultado. Com a base simulada, o aviso é o mesmo para retiradas de 120 a 225 L; a partir de 230 L o nível passa a Crítico, e retiradas muito grandes também geram "Estoque crítico" e "Retirada fora do padrão".
 - **Unificação:** em *Cadastros duplicados*, unifique "KCl" com "Cloreto de potássio (KCl)". O alerta falso de ruptura do "KCl" é resolvido na hora.
 
-### Como regenerar o vídeo
-
-O vídeo demonstrativo é gerado por script, com cliques e preenchimentos reais no app, seguindo as cenas, os tempos e a narração da tabela de [`docs/roteiro-video.md`](docs/roteiro-video.md). A narração aparece como legenda na parte de baixo, para o vídeo funcionar sem som e a equipe gravar a voz por cima.
-
-```bash
-npx playwright install chromium   # uma vez (ou CHROMIUM_PATH=/caminho/do/chrome)
-npm run gravar-video              # grava o site da Netlify
-APP_URL=http://localhost:3000 npm run gravar-video   # ou o app local (npm run build && npm start)
-```
-
-Saída em `video/` (fora do Git): `agrosentinela-demo.mp4` (1920×1080, H.264, 30 fps, cerca de 3 min) e `agrosentinela-demo.srt` com as legendas para o YouTube. Os quadros das cenas 1, 2, 6 e 9 vão para `docs/img/video/`. Precisa do ffmpeg; sem ele no sistema, rode `npm i --no-save ffmpeg-static`. Mudou o roteiro? Basta gravar de novo.
-
 ## 7. Validação
 
 O plano de teste completo, com o oráculo de cada parte e os casos de caminho feliz e de erro, está em [`TESTING.md`](TESTING.md). Separamos quatro perguntas diferentes, porque cada uma tem uma prova diferente:
