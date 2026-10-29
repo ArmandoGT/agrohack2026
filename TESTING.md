@@ -7,7 +7,7 @@ Este documento é a evidência de qualidade pedida no regulamento (seção 7, it
 Tudo roda com um comando e também no CI (GitHub Actions), a cada push:
 
 ```bash
-npm test               # 30 testes automatizados (Vitest)
+npm test               # 31 testes automatizados (Vitest)
 npm run eval           # loop de avaliação contra o gabarito → docs/eval-report.md
 npm run eval:robustez  # o mesmo loop em 10 bases simuladas diferentes
 npm run eval:previsao  # backtest do modelo de previsão → docs/eval-previsao.md
@@ -36,6 +36,7 @@ Os casos de erro seguem a ideia de **partição do espaço de entradas e anális
 | LE-02 | Datas "05/03/2026", "2026-03-05" e o número de série do Excel 46086 | Todas viram 2026-03-05 | › "lê datas em vários formatos" |
 | LE-03 | Cabeçalhos "Insumo", "Qtde", "Operação: Compra", "Vencimento" | Mapeados para produto, quantidade, tipo entrada e validade | › "mapeia cabeçalhos com nomes diferentes" |
 | LE-03b | Cabeçalhos do edital: "Tipo de movimentação", "Preço de aquisição (R$)", "Destino da retirada", "Estoque mínimo" | Todos mapeados; "Entrada", "Saída" e "Saldo inicial" lidos pela palavra inteira | › "aceita os cabeçalhos com o vocabulário do edital" |
+| LE-03c | A base simulada inteira com os cabeçalhos do edital (`public/data/exemplo-cabecalhos-edital.csv`) | 2.313 linhas lidas, nenhuma rejeitada, e os mesmos alertas, com o mesmo score | › "a mesma base com os cabeçalhos do edital é lida inteira e gera os mesmos alertas" |
 | LE-04 | Base oficial importada na tela *Importar planilha* (CSV e XLSX) | Colunas reconhecidas e linhas rejeitadas, com o motivo, mostradas antes de usar a base | Tela *Importar planilha* (teste manual) |
 
 | ID | Entrada de erro ou fronteira | Resultado esperado | Evidência |

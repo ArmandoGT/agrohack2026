@@ -88,7 +88,7 @@ Requisitos: Node.js 20+.
 ```bash
 npm install
 npm run dev          # http://localhost:3000 (abre com a base SIMULADA)
-npm test             # 30 testes unitários (Vitest)
+npm test             # 31 testes unitários (Vitest)
 npm run eval         # loop de avaliação → docs/eval-report.md
 npm run eval:robustez # avaliação em 10 bases simuladas diferentes
 npm run eval:previsao # backtest do modelo de previsão → docs/eval-previsao.md
@@ -96,7 +96,7 @@ npm run gerar-dados  # recria data/simulado.csv e o gabarito
 npm run build && npm start
 ```
 
-**Base oficial:** quando for divulgada, use *Importar planilha* e envie o arquivo (CSV ou XLSX). As colunas são reconhecidas por uma lista de nomes e variações, inclusive o vocabulário do edital ("Tipo de movimentação", "Preço de aquisição (R$)", "Destino da retirada"). Antes de usar a base, a tela mostra quais colunas foram reconhecidas e as linhas rejeitadas com o motivo. Uma coluna fora da lista não é adivinhada: fica sem uso e aparece nesse relatório.
+**Base oficial:** quando for divulgada, use *Importar planilha* e envie o arquivo (CSV ou XLSX). As colunas são reconhecidas por uma lista de nomes e variações, inclusive o vocabulário do edital ("Tipo de movimentação", "Preço de aquisição (R$)", "Destino da retirada"). Antes de usar a base, a tela mostra quais colunas foram reconhecidas e as linhas rejeitadas com o motivo. Uma coluna fora da lista não é adivinhada: fica sem uso e aparece nesse relatório. Para testar, importe `public/data/exemplo-cabecalhos-edital.csv`, que é a base simulada com os cabeçalhos do edital: as 2.313 linhas entram e os alertas são os mesmos.
 
 **Persistência:**
 - Por padrão, os dados ficam no navegador.
@@ -137,7 +137,7 @@ O plano de teste completo, com o oráculo de cada parte e os casos de caminho fe
 3. **O modelo de previsão é melhor que a média simples?** Medimos em vez de supor. Para cada produto, escondemos as últimas 4 semanas (em até 3 rodadas), ajustamos o modelo sem elas e comparamos com o consumo real. Nas 10 bases simuladas, o modelo erra **6,2% menos** que a média de 30 dias (WAPE de 27,3% contra 29,1%), e a faixa de 80% contém o consumo real em 87,3% das rodadas. O ganho é pequeno, e por isso **o modelo só aparece no produto em que venceu a média com folga de 5%**: nos demais, a ficha diz que a média foi melhor. Detalhes em [`docs/eval-previsao.md`](docs/eval-previsao.md).
 4. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md). Até agora, apresentamos a ideia a um produtor de uma fazenda da Linha C-45, em Ariquemes. Ele disse que a ferramenta seria útil e que trabalhar com previsibilidade e dados ajudaria na gestão. Foi **uma** conversa sobre a ideia, sem uso do app, e por isso ela confirma o interesse, mas não substitui um teste com usuários.
 
-Também temos **30 testes automatizados** (leitura, cabeçalhos do edital, unidades, valores ausentes, grafo de duplicados, DAG, detectores, lote vencido, vencimento com vários lotes, meta do eval, a demonstração de reanálise e o modelo de previsão, inclusive a garantia de que ele não altera nenhum alerta). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
+Também temos **31 testes automatizados** (leitura, cabeçalhos do edital, a base inteira reescrita no vocabulário do edital gerando os mesmos alertas, unidades, valores ausentes, grafo de duplicados, DAG, detectores, lote vencido, vencimento com vários lotes, meta do eval, a demonstração de reanálise e o modelo de previsão, inclusive a garantia de que ele não altera nenhum alerta). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
 
 ### O que funciona
 

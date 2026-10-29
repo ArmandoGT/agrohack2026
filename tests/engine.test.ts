@@ -4,7 +4,7 @@ import { ordemTopologica } from "../src/lib/engine/dag";
 import { gruposDuplicados, similaridade } from "../src/lib/engine/entities";
 import { fatorConversao, normalizarLinhas, parseData, parseNumero } from "../src/lib/engine/normalize";
 import type { Movimentacao } from "../src/lib/engine/types";
-import { rodar } from "../scripts/eval-lib";
+import { carregar, rodar } from "../scripts/eval-lib";
 
 let id = 0;
 const mov = (m: Partial<Movimentacao>): Movimentacao => ({
@@ -195,5 +195,14 @@ describe("loop de avaliação", () => {
     const { recall, precisao } = rodar();
     expect(recall).toBeGreaterThanOrEqual(0.9);
     expect(precisao).toBeGreaterThanOrEqual(0.85);
+  });
+  it("a mesma base com os cabeçalhos do edital é lida inteira e gera os mesmos alertas", () => {
+    const original = carregar();
+    const edital = carregar("public/data/exemplo-cabecalhos-edital.csv");
+    expect(edital.rejeitadas).toHaveLength(0);
+    expect(edital.movimentacoes).toHaveLength(original.movimentacoes.length);
+    const resumo = (movs: Movimentacao[]) =>
+      analisar(movs, { dataReferencia: original.gabarito.dataReferencia }).alertas.map((a) => `${a.detector}|${a.produtoKey}|${a.score}`);
+    expect(resumo(edital.movimentacoes)).toEqual(resumo(original.movimentacoes));
   });
 });
