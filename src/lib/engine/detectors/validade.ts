@@ -36,7 +36,7 @@ export function riscoVencimento(ctx: Contexto): Alerta[] {
     const capacidade = p.consumoMedioDia * dias;
     const usado = Math.min(l.quantidade, Math.max(0, capacidade - consumidoAntes));
     const sobra = l.quantidade - usado;
-    consumidoAntes += l.quantidade;
+    consumidoAntes += usado; // só o que se espera usar deste lote consome a capacidade dos dias
     if (sobra <= l.quantidade * 0.05) continue;
     alertas.push(
       criarAlerta(p, {

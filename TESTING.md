@@ -7,7 +7,7 @@ Este documento é a evidência de qualidade pedida no regulamento (seção 7, it
 Tudo roda com um comando e também no CI (GitHub Actions), a cada push:
 
 ```bash
-npm test               # 26 testes automatizados (Vitest)
+npm test               # 31 testes automatizados (Vitest)
 npm run eval           # loop de avaliação contra o gabarito → docs/eval-report.md
 npm run eval:robustez  # o mesmo loop em 10 bases simuladas diferentes
 npm run eval:previsao  # backtest do modelo de previsão → docs/eval-previsao.md
@@ -35,6 +35,8 @@ Os casos de erro seguem a ideia de **partição do espaço de entradas e anális
 | LE-01 | Números "1.234,56", "R$ 12,50" e "1234.5" | 1234,56; 12,5 e 1234,5 | `tests/engine.test.ts` › "lê números no formato brasileiro e internacional" |
 | LE-02 | Datas "05/03/2026", "2026-03-05" e o número de série do Excel 46086 | Todas viram 2026-03-05 | › "lê datas em vários formatos" |
 | LE-03 | Cabeçalhos "Insumo", "Qtde", "Operação: Compra", "Vencimento" | Mapeados para produto, quantidade, tipo entrada e validade | › "mapeia cabeçalhos com nomes diferentes" |
+| LE-03b | Cabeçalhos do edital: "Tipo de movimentação", "Preço de aquisição (R$)", "Destino da retirada", "Estoque mínimo" | Todos mapeados; "Entrada", "Saída" e "Saldo inicial" lidos pela palavra inteira | › "aceita os cabeçalhos com o vocabulário do edital" |
+| LE-03c | A base simulada inteira com os cabeçalhos do edital (`public/data/exemplo-cabecalhos-edital.csv`) | 2.313 linhas lidas, nenhuma rejeitada, e os mesmos alertas, com o mesmo score | › "a mesma base com os cabeçalhos do edital é lida inteira e gera os mesmos alertas" |
 | LE-04 | Base oficial importada na tela *Importar planilha* (CSV e XLSX) | Colunas reconhecidas e linhas rejeitadas, com o motivo, mostradas antes de usar a base | Tela *Importar planilha* (teste manual) |
 
 | ID | Entrada de erro ou fronteira | Resultado esperado | Evidência |
@@ -43,6 +45,8 @@ Os casos de erro seguem a ideia de **partição do espaço de entradas e anális
 | LE-E2 | Mesmo produto em t e kg; em mL e L | Convertidos para a mesma unidade antes de somar | › "converte unidades da mesma família e recusa famílias diferentes" |
 | LE-E3 | Mesmo produto em kg e L | **Não soma**; o caso é separado e vira alerta de qualidade dos dados | › "não soma unidades diferentes sem tratamento" |
 | LE-E4 | Linha com quantidade "abc", produto vazio, tipo não reconhecido ou data inválida | Rejeitada com o número da linha e o motivo, sem derrubar as outras | › "mapeia cabeçalhos com nomes diferentes" (1 rejeitada) e tela *Importar planilha* › "Ver linhas rejeitadas" |
+| LE-E4b | Tipo "Estorno" (desconhecido) | Rejeitado com o motivo, e não adivinhado pela letra inicial | › "aceita os cabeçalhos com o vocabulário do edital" |
+| LE-E4c | Coluna "Preço total (R$)" | **Não** é usada como preço unitário | › "não usa coluna de preço total como preço unitário" |
 | LE-E5 | Arquivo acima de 15 MB | Recusado com mensagem clara, sem travar a página | `src/lib/import.ts` (`TAMANHO_MAXIMO_MB`) |
 
 ## 3. Detectores de alerta (`src/lib/engine/detectors/`)
@@ -56,9 +60,11 @@ Os casos de erro seguem a ideia de **partição do espaço de entradas e anális
 |---|---|---|---|
 | DE-01 | Estoque abaixo do mínimo com consumo regular | Alerta com a duração estimada, no formato do exemplo do edital | `tests/engine.test.ts` › "estoque crítico com estimativa de duração" |
 | DE-02 | Lote que vence antes de ser consumido no ritmo atual | Alerta de vencimento, considerando o consumo previsto até a validade (quem vence primeiro sai primeiro) | › "vencimento considera o consumo previsto até a validade (FEFO)" |
+| DE-02b | Dois lotes com validade, consumo de 1 kg/dia | Sobra calculada lote a lote: 10 kg no primeiro e 80 kg no segundo, conferidos à mão | › "sobra no vencimento com vários lotes não é superestimada" |
+| DE-02c | Lote vencido de 100 kg e lote válido; retiradas depois do vencimento | As retiradas saem do lote válido; saldo utilizável = físico − vencido; alerta de estoque crítico pelo utilizável | › "lote vencido fica fora do saldo utilizável e o FEFO não dá baixa nele" |
 | DE-03 | Retirada muito acima do normal | Alerta de retirada fora do padrão | › "retirada muito acima do normal vira alerta, variação comum não" |
 | DE-04 | "KCl" e "Cloreto de potássio (KCl)" | Sugeridos como o mesmo produto | › "reconhece sigla e variações de grafia" |
-| DE-05 | Base simulada inteira | Recall ≥ meta e precisão ≥ meta | › "encontra as anomalias plantadas" e `npm run eval` |
+| DE-05 | Base simulada inteira | Recall ≥ meta e precisão ≥ meta (o relatório também publica a precisão estrita, que conta os alertas aceitáveis como erro) | › "encontra as anomalias plantadas" e `npm run eval` |
 
 | ID | Caso de erro ou fronteira | Resultado esperado | Evidência |
 |---|---|---|---|

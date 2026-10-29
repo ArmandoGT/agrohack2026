@@ -74,7 +74,9 @@ export interface ProdutoAnalise {
   unidade: string; // unidade de exibição (a mais usada nos registros); todas as quantidades estão nela
   familia: string; // família de unidade (kg, L, un...) usada para comparar produtos
   estoqueMinimo: number | null;
-  saldo: number;
+  saldo: number; // saldo físico: tudo o que está registrado, inclusive lotes vencidos
+  saldoVencido: number; // parte do saldo em lotes com validade anterior à data de referência
+  saldoUtilizavel: number; // saldo − vencido; base de cobertura, compra, ruptura e excesso
   lotes: LoteSaldo[];
   /** Consumo diário (saídas) indexado a partir de `inicio`. */
   consumoDiario: number[];
@@ -85,7 +87,7 @@ export interface ProdutoAnalise {
   totalSaidas: number;
   totalEntradas: number;
   diasHistorico: number;
-  coberturaDias: number | null; // saldo / consumo médio
+  coberturaDias: number | null; // saldo utilizável / consumo médio
   ultimaSaida: string | null;
   ultimaEntrada: string | null;
   precoReferencia: number | null; // último preço conhecido

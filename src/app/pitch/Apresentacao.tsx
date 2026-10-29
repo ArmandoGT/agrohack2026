@@ -6,6 +6,7 @@
 // passa o slide, como as animações do PowerPoint; ↓ e ↑ movem só o zoom.
 // Transição curta e sempre igual: o slide sai em 0,22 s e o próximo entra em 0,38 s (0,6 s no total).
 // Com prefers-reduced-motion, o MotionConfig deixa só o fade (sem deslocamento nem escala).
+// Um id de slide na URL (/pitch#perguntas) abre a apresentação nesse slide.
 
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -43,6 +44,17 @@ export function Apresentacao() {
       return alvo;
     });
   }, []);
+
+  // /pitch#perguntas abre direto no slide com esse id (uma segunda aba retoma depois da demo ao vivo).
+  useEffect(() => {
+    const porHash = () => {
+      const n = SLIDES.findIndex((s) => s.id === window.location.hash.slice(1));
+      if (n >= 0) ir(n);
+    };
+    porHash();
+    window.addEventListener("hashchange", porHash);
+    return () => window.removeEventListener("hashchange", porHash);
+  }, [ir]);
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {

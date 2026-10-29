@@ -27,7 +27,19 @@ export function carregar(csv = "data/simulado.csv", gt = "data/ground_truth.json
   return { movimentacoes, rejeitadas, gabarito };
 }
 
-export function avaliar(analise: Analise, g: Gabarito): { linhas: LinhaRelatorio[]; recall: number; precisao: number } {
+export interface Avaliacao {
+  linhas: LinhaRelatorio[];
+  recall: number;
+  /** Alertas aceitáveis contam como válidos (não são falso positivo). */
+  precisao: number;
+  /** Só o que está no gabarito conta como acerto; aceitáveis contam como erro. */
+  precisaoEstrita: number;
+  /** Pares (detector, produto) distintos com alerta, e quantos deles são só aceitáveis. */
+  paresAlertados: number;
+  paresAceitaveis: number;
+}
+
+export function avaliar(analise: Analise, g: Gabarito): Avaliacao {
   const detectores = [...new Set([...g.gabarito.map((x) => x.detector), ...analise.alertas.map((a) => a.detector)])];
   const linhas: LinhaRelatorio[] = [];
   let tp = 0, esperadosTot = 0, fpTot = 0;
@@ -55,7 +67,21 @@ export function avaliar(analise: Analise, g: Gabarito): { linhas: LinhaRelatorio
       precisao: acertos + fp.length ? acertos / (acertos + fp.length) : 1,
     });
   }
-  return { linhas, recall: esperadosTot ? tp / esperadosTot : 1, precisao: tp + fpTot ? tp / (tp + fpTot) : 1 };
+  const pares = new Set(analise.alertas.map((a) => `${a.detector}|${a.produtoKey}`));
+  const noGabarito = (par: string, lista: { detector: DetectorId; produtos: string[] }[]) => {
+    const [d, k] = par.split("|");
+    return lista.some((x) => x.detector === d && x.produtos.includes(k));
+  };
+  const paresCertos = [...pares].filter((par) => noGabarito(par, g.gabarito)).length;
+  const paresAceitaveis = [...pares].filter((par) => !noGabarito(par, g.gabarito) && noGabarito(par, g.aceitaveis)).length;
+  return {
+    linhas,
+    recall: esperadosTot ? tp / esperadosTot : 1,
+    precisao: tp + fpTot ? tp / (tp + fpTot) : 1,
+    precisaoEstrita: pares.size ? paresCertos / pares.size : 1,
+    paresAlertados: pares.size,
+    paresAceitaveis,
+  };
 }
 
 export function rodar() {

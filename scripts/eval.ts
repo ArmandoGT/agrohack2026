@@ -7,7 +7,7 @@ import { rodar } from "./eval-lib";
 const META_RECALL = 0.9;
 const META_PRECISAO = 0.85;
 
-const { analise, rejeitadas, linhas, recall, precisao } = rodar();
+const { analise, rejeitadas, linhas, recall, precisao, precisaoEstrita, paresAlertados, paresAceitaveis } = rodar();
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
 
 const md = [
@@ -16,6 +16,8 @@ const md = [
   `Gerado em ${new Date().toISOString().slice(0, 16).replace("T", " ")} · data de referência ${analise.dataReferencia} · ${analise.resumo.totalMovimentacoes} movimentações · ${analise.resumo.totalProdutos} produtos · ${rejeitadas.length} linhas rejeitadas`,
   "",
   `**Recall geral: ${pct(recall)}** (meta ${pct(META_RECALL)}) · **Precisão geral: ${pct(precisao)}** (meta ${pct(META_PRECISAO)})`,
+  "",
+  `**Precisão estrita: ${pct(precisaoEstrita)}.** Dos ${paresAlertados} pares (detector, produto) com alerta, ${paresAlertados - paresAceitaveis} estão no gabarito de anomalias plantadas e ${paresAceitaveis} estão na lista de *aceitáveis* (\`data/ground_truth.json\`). Aceitáveis são alertas coerentes com os dados, mas que não correspondem a uma anomalia plantada de propósito. A precisão geral os trata como válidos; a estrita os conta como erro.`,
   "",
   "| Detector | Plantadas | Encontradas | Recall | Precisão | Falsos positivos | Não encontradas |",
   "|---|---|---|---|---|---|---|",

@@ -26,9 +26,10 @@ function series(p: ProdutoAnalise, dataRef: string) {
     s += delta[d];
     if (d % 3 === 0 || d === n - 1) saldo.push({ data: somarDias(p.inicio, d), saldo: Math.round(s * 100) / 100 });
   }
-  // Projeção: mantido o consumo médio recente, até zerar (máx. 90 dias)
+  // Projeção a partir do saldo utilizável (lote vencido não vai para a lavoura): consumo médio recente, até zerar (máx. 90 dias)
+  if (p.saldoVencido > 0) s = Math.max(0, s - p.saldoVencido);
   if (p.consumoMedioDia > 0 && s > 0) {
-    saldo[saldo.length - 1].projecao = saldo[saldo.length - 1].saldo;
+    saldo[saldo.length - 1].projecao = Math.round(s * 100) / 100;
     const fim = Math.min(90, Math.ceil(s / p.consumoMedioDia));
     for (let d = 3; d <= fim; d += 3) saldo.push({ data: somarDias(dataRef, d), projecao: Math.max(0, Math.round((s - p.consumoMedioDia * d) * 100) / 100) });
   }
@@ -122,7 +123,7 @@ export default function ProdutoDetalhe() {
   if (!p || !dados) return <p className="text-base">Produto não encontrado. <Link href="/produtos" className="text-brand underline underline-offset-4">Voltar</Link></p>;
   const alertas = alertasDoProduto(analise, p.key);
   const nivel = piorNivel(alertas);
-  const zera = p.consumoMedioDia > 0 && p.saldo > 0 ? somarDias(analise.dataReferencia, Math.floor(p.saldo / p.consumoMedioDia)) : null;
+  const zera = p.consumoMedioDia > 0 && p.saldoUtilizavel > 0 ? somarDias(analise.dataReferencia, Math.floor(p.saldoUtilizavel / p.consumoMedioDia)) : null;
 
   return (
     <>
@@ -139,7 +140,12 @@ export default function ProdutoDetalhe() {
       <Fleurao className="mt-4 mb-6" />
 
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Kpi rotulo="Saldo" valor={`${fmtNum(p.saldo)} ${p.unidade}`} tom={p.estoqueMinimo !== null && p.saldo <= p.estoqueMinimo ? "critico" : undefined} />
+        <Kpi
+          rotulo={p.saldoVencido > 0 ? "Saldo utilizável" : "Saldo"}
+          valor={`${fmtNum(p.saldoUtilizavel)} ${p.unidade}`}
+          detalhe={p.saldoVencido > 0 ? `+ ${fmtNum(p.saldoVencido)} ${p.unidade} vencidos (físico ${fmtNum(p.saldo)})` : undefined}
+          tom={p.estoqueMinimo !== null && p.saldoUtilizavel <= p.estoqueMinimo ? "critico" : undefined}
+        />
         <Kpi rotulo="Estoque mínimo" valor={p.estoqueMinimo === null ? "—" : `${fmtNum(p.estoqueMinimo)} ${p.unidade}`} />
         <Kpi rotulo="Consumo médio" valor={`${fmtNum(p.consumoMedioDia, 2)}/dia`} detalhe={p.janelaTaxa} />
         <Kpi rotulo="Dura até" valor={zera ? fmtData(zera) : "—"} detalhe={p.coberturaDias !== null ? `~${fmtNum(p.coberturaDias, 0)} dias` : "sem consumo recente"} />
