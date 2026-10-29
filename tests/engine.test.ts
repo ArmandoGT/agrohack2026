@@ -40,6 +40,23 @@ describe("normalização", () => {
     expect(movimentacoes[0]).toMatchObject({ produto: "MAP", quantidade: 100, tipo: "entrada", preco: 4.5, validade: "2027-01-10" });
     expect(rejeitadas).toHaveLength(1);
   });
+  it("aceita os cabeçalhos com o vocabulário do edital", () => {
+    const linha = (tipo: string, extra: Record<string, string> = {}) => ({
+      Produto: "Glifosato", Categoria: "Defensivos", Unidade: "L", Quantidade: "20", "Estoque mínimo": "50",
+      "Tipo de movimentação": tipo, Data: "10/01/2026", "Preço de aquisição (R$)": "32,90", Lote: "G1",
+      Validade: "10/01/2027", Fornecedor: "Agro Sul", "Destino da retirada": "Talhão 3", Responsável: "João", ...extra,
+    });
+    const { movimentacoes, rejeitadas, mapa } = normalizarLinhas([linha("Entrada"), linha("Saída"), linha("Saldo inicial"), linha("Estorno")]);
+    expect(mapa).toMatchObject({ tipo: "Tipo de movimentação", preco: "Preço de aquisição (R$)", destino: "Destino da retirada", estoqueMinimo: "Estoque mínimo" });
+    expect(movimentacoes.map((m) => m.tipo)).toEqual(["entrada", "saida", "entrada"]);
+    expect(movimentacoes[0]).toMatchObject({ preco: 32.9, estoqueMinimo: 50, destino: "Talhão 3", validade: "2027-01-10" });
+    // tipo desconhecido é rejeitado com motivo, e não adivinhado pela letra inicial
+    expect(rejeitadas).toEqual([{ linha: 5, motivo: "tipo (entrada/saída) não reconhecido" }]);
+  });
+  it("não usa coluna de preço total como preço unitário", () => {
+    const { mapa } = normalizarLinhas([{ Produto: "MAP", Quantidade: "10", Tipo: "Entrada", Data: "10/01/2026", "Preço total (R$)": "450" }]);
+    expect(mapa.preco).toBeUndefined();
+  });
   it("converte unidades da mesma família e recusa famílias diferentes", () => {
     expect(fatorConversao("t", "kg")).toBe(1000);
     expect(fatorConversao("ml", "L")).toBe(0.001);
@@ -107,6 +124,40 @@ describe("detectores", () => {
     const a = analisar(movs).alertas.find((x) => x.detector === "risco_vencimento")!;
     expect(a).toBeDefined();
     expect(a.evidencias.sobraPrevista as number).toBeCloseTo(35, 0);
+  });
+
+  it("lote vencido fica fora do saldo utilizável e o FEFO não dá baixa nele", () => {
+    const movs = [
+      mov({ tipo: "entrada", quantidade: 100, data: dia(0), lote: "V", validade: dia(10), preco: 3, estoqueMinimo: 50 }),
+      mov({ tipo: "entrada", quantidade: 100, data: dia(0), lote: "N", validade: dia(300), preco: 3 }),
+    ];
+    for (let d = 20; d <= 80; d++) movs.push(mov({ quantidade: 1, data: dia(d) }));
+    const r = analisar(movs);
+    const p = r.produtos[0];
+    // as 61 retiradas, todas depois do vencimento de V, saem do lote N
+    expect(p.lotes.find((l) => l.lote === "V")!.quantidade).toBe(100);
+    expect(p.lotes.find((l) => l.lote === "N")!.quantidade).toBe(39);
+    expect(p.saldo).toBe(139);
+    expect(p.saldoVencido).toBe(100);
+    expect(p.saldoUtilizavel).toBe(39);
+    expect(p.coberturaDias).toBeCloseTo(39, 0); // 1 kg/dia
+    // o saldo físico (139) passa do mínimo, mas o utilizável (39) não: tem de alertar
+    const a = r.alertas.find((x) => x.detector === "estoque_critico")!;
+    expect(a).toBeDefined();
+    expect(a.mensagem).toMatch(/Não conta 100 kg em lote vencido/);
+  });
+
+  it("sobra no vencimento com vários lotes não é superestimada", () => {
+    // lote C sem validade consome o histórico; A e B chegam na data de referência
+    const movs = [mov({ tipo: "entrada", quantidade: 200, data: dia(0), lote: "C" })];
+    for (let d = 1; d <= 100; d++) movs.push(mov({ quantidade: 1, data: dia(d), lote: "C" }));
+    movs.push(mov({ tipo: "entrada", quantidade: 30, data: dia(100), lote: "A", validade: dia(120), preco: 10 }));
+    movs.push(mov({ tipo: "entrada", quantidade: 100, data: dia(100), lote: "B", validade: dia(140), preco: 10 }));
+    const venc = analisar(movs).alertas.filter((x) => x.detector === "risco_vencimento");
+    const sobra = (lote: string) => venc.find((a) => a.evidencias.lote === lote)!.evidencias.sobraPrevista as number;
+    // 1 kg/dia: A usa 20 em 20 dias e sobram 10; B usa os 20 dias seguintes e sobram 80 (antes saía 90)
+    expect(sobra("A")).toBeCloseTo(10, 5);
+    expect(sobra("B")).toBeCloseTo(80, 5);
   });
 
   it("estimativa com pouco histórico comunica baixa confiança", () => {

@@ -188,9 +188,9 @@ export function preverConsumo(p: ProdutoAnalise, dataRef: string): PrevisaoConsu
     motivo: "o modelo errou ao menos 5% menos que a média simples no teste",
     projecao,
     diasAteZerar: {
-      centro: diaQueZera(p.saldo, central),
-      otimista: diaQueZera(p.saldo, porSemana(faixa.map((f) => f.baixo))),
-      pessimista: diaQueZera(p.saldo, porSemana(faixa.map((f) => f.alto))),
+      centro: diaQueZera(p.saldoUtilizavel, central),
+      otimista: diaQueZera(p.saldoUtilizavel, porSemana(faixa.map((f) => f.baixo))),
+      pessimista: diaQueZera(p.saldoUtilizavel, porSemana(faixa.map((f) => f.alto))),
     },
     backtest,
     parametros,

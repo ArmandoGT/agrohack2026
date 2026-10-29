@@ -50,10 +50,15 @@ export function montarProduto(key: string, movs: Movimentacao[], dataRef: string
   let ultimaSaida: string | null = null;
   let ultimaEntrada: string | null = null;
 
-  const fefo = () =>
-    lotes
+  // FEFO: baixa primeiro o lote válido que vence antes. Lote já vencido na data da retirada
+  // não é usado na lavoura; só recebe a baixa se não houver lote válido (retirada para descarte).
+  const fefo = (data: string) => {
+    const comSaldo = lotes
       .filter((l) => l.quantidade > 1e-9)
       .sort((a, b) => (a.validade ?? "9999").localeCompare(b.validade ?? "9999") || a.dataEntrada.localeCompare(b.dataEntrada));
+    const vencido = (l: LoteSaldo) => l.validade !== null && l.validade < data;
+    return [...comSaldo.filter((l) => !vencido(l)), ...comSaldo.filter(vencido)];
+  };
 
   for (const m of ordenadas) {
     const fator = fatorConversao(m.unidade, unidade);
@@ -83,7 +88,7 @@ export function montarProduto(key: string, movs: Movimentacao[], dataRef: string
       saidasPorDia[dia] += 1;
       let resta = qtd;
       const alvo = m.lote ? lotes.find((l) => l.lote === m.lote && l.quantidade > 0) : undefined;
-      for (const l of alvo ? [alvo, ...fefo().filter((x) => x !== alvo)] : fefo()) {
+      for (const l of alvo ? [alvo, ...fefo(m.data).filter((x) => x !== alvo)] : fefo(m.data)) {
         if (resta <= 0) break;
         const usa = Math.min(l.quantidade, resta);
         l.quantidade -= usa;
@@ -94,6 +99,9 @@ export function montarProduto(key: string, movs: Movimentacao[], dataRef: string
 
   const { taxa, rotulo, saidas } = taxaConsumo(consumoDiario, saidasPorDia);
   const lotesAtivos = lotes.filter((l) => l.quantidade > 1e-6);
+  const saldoVencido = lotesAtivos.filter((l) => l.validade !== null && l.validade < dataRef).reduce((s, l) => s + l.quantidade, 0);
+  // Saldo negativo é erro de registro (tratado em qualidade dos dados) e fica como está.
+  const saldoUtilizavel = saldo > 0 ? Math.max(0, saldo - saldoVencido) : saldo;
   let valorEstoque: number | null = null;
   let valorEstimado = false;
   for (const l of lotesAtivos) {
@@ -114,6 +122,8 @@ export function montarProduto(key: string, movs: Movimentacao[], dataRef: string
     familia,
     estoqueMinimo,
     saldo,
+    saldoVencido,
+    saldoUtilizavel,
     lotes: lotesAtivos,
     consumoDiario,
     inicio,
@@ -123,7 +133,7 @@ export function montarProduto(key: string, movs: Movimentacao[], dataRef: string
     totalSaidas,
     totalEntradas,
     diasHistorico: nDias,
-    coberturaDias: taxa > 0 ? Math.max(0, saldo) / taxa : null,
+    coberturaDias: taxa > 0 ? Math.max(0, saldoUtilizavel) / taxa : null,
     ultimaSaida,
     ultimaEntrada,
     precoReferencia,

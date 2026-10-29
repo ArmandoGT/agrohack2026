@@ -16,8 +16,15 @@ export function normalizarNome(s: string): string {
     .trim();
 }
 
+/** "Preço de aquisição (R$)" → "preco_aquisicao": sem acento, sem parênteses e sem preposições. */
 function chaveCabecalho(s: string): string {
-  return semAcento(String(s)).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return semAcento(String(s))
+    .toLowerCase()
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(" ")
+    .filter((w) => w && !["de", "da", "do", "das", "dos", "em", "e", "a", "o"].includes(w))
+    .join("_");
 }
 
 const ALIASES: Record<keyof Omit<Movimentacao, "id" | "simulado">, string[]> = {
@@ -40,13 +47,21 @@ const ALIASES: Record<keyof Omit<Movimentacao, "id" | "simulado">, string[]> = {
 export function mapearColunas(cabecalhos: string[]): Partial<Record<keyof typeof ALIASES, string>> {
   const mapa: Partial<Record<keyof typeof ALIASES, string>> = {};
   const usados = new Set<string>();
-  for (const campo of Object.keys(ALIASES) as (keyof typeof ALIASES)[]) {
-    for (const h of cabecalhos) {
-      if (usados.has(h)) continue;
-      if (ALIASES[campo].includes(chaveCabecalho(h))) {
+  const campos = Object.keys(ALIASES) as (keyof typeof ALIASES)[];
+  const aliases = (c: keyof typeof ALIASES) => ALIASES[c].map(chaveCabecalho);
+  // 1ª passada: nome exato (após normalizar). 2ª passada: o cabeçalho começa com um alias
+  // ("Data da movimentação", "Quantidade (kg)"), para colunas que ainda não foram usadas.
+  const passadas: ((chave: string, alias: string) => boolean)[] = [
+    (k, a) => k === a,
+    (k, a) => a.length >= 3 && k.startsWith(a + "_") && !k.includes("total"), // preço total nunca vira preço unitário
+  ];
+  for (const casa of passadas) {
+    for (const campo of campos) {
+      if (mapa[campo]) continue;
+      const h = cabecalhos.find((h) => !usados.has(h) && aliases(campo).some((a) => casa(chaveCabecalho(h), a)));
+      if (h) {
         mapa[campo] = h;
         usados.add(h);
-        break;
       }
     }
   }
@@ -95,10 +110,11 @@ export function parseData(v: unknown): string | null {
   return null;
 }
 
+/** Reconhece o tipo pela palavra inteira, não pela letra inicial ("Saldo inicial" não é saída). */
 export function parseTipo(v: unknown): TipoMov | null {
-  const s = normalizarNome(String(v ?? ""));
-  if (/^(e|entrada|compra|in|recebimento|ent)/.test(s)) return "entrada";
-  if (/^(s|saida|retirada|consumo|out|baixa|uso|requisicao)/.test(s)) return "saida";
+  const s = normalizarNome(String(v ?? "")).replace(/[^a-z ]+/g, " ").trim();
+  if (/^(e|ent|entrada|entradas|compra|compras|in|recebimento|devolucao|saldo inicial|estoque inicial|inventario inicial)(?![a-z])/.test(s)) return "entrada";
+  if (/^(s|sai|saida|saidas|retirada|retiradas|consumo|out|baixa|uso|requisicao|aplicacao|descarte)(?![a-z])/.test(s)) return "saida";
   return null;
 }
 
