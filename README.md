@@ -2,7 +2,7 @@
 
 > **AGROHACK 2026/2 · IFRO Campus Ariquemes** · Desafio oficial: *Gestão inteligente de insumos em uma propriedade rural*
 >
-> A AgroSentinela transforma os registros de entradas e saídas do estoque em **alertas priorizados e justificados**. Cada alerta diz **o quê** está acontecendo, **por quê**, **o que fazer** e **quanto dá para confiar** na estimativa.
+> A AgroSentinela transforma os registros de entradas e saídas do estoque em **alertas priorizados e justificados**. Cada alerta diz **o que** está acontecendo, **por quê**, **o que fazer** e **quanto dá para confiar** na estimativa.
 
 **Link da solução:** [agrohack-agrosentinela.netlify.app](https://agrohack-agrosentinela.netlify.app) (slides do pitch em [`/pitch`](https://agrohack-agrosentinela.netlify.app/pitch))\
 **Vídeo demonstrativo:** [youtu.be/t3ghbFW5BiI](https://youtu.be/t3ghbFW5BiI)\
@@ -55,7 +55,7 @@
 | ![Financeiro com curva ABC e valor por categoria](docs/img/financeiro.png) | ![Cadastros duplicados com grupos de nomes parecidos](docs/img/cadastros.png) |
 | **Financeiro** — curva ABC, valor por categoria e dinheiro em risco. | **Cadastros duplicados** — nomes parecidos agrupados; unificar refaz a análise. |
 | ![Importação de planilha CSV ou Excel](docs/img/importar.png) | ![Como funciona: as 7 perguntas do desafio e o pipeline](docs/img/como-funciona.png) |
-| **Importar planilha** — CSV ou Excel, com as colunas reconhecidas pelo nome. | **Como funciona** — as 7 perguntas do desafio, o pipeline e os critérios. |
+| **Importar planilha** — CSV ou Excel; as colunas são reconhecidas por uma lista de nomes e variações. | **Como funciona** — as 7 perguntas do desafio, o pipeline e os critérios. |
 | ![Painel do dia no celular](docs/img/celular-painel.png) | ![Produtos no celular, em cards](docs/img/celular-produtos.png) |
 | **Celular** — menu fixo no rodapé, botões grandes e textos legíveis. | **Celular** — a tabela de produtos vira uma lista de cards. |
 
@@ -88,7 +88,7 @@ Requisitos: Node.js 20+.
 ```bash
 npm install
 npm run dev          # http://localhost:3000 (abre com a base SIMULADA)
-npm test             # 26 testes unitários (Vitest)
+npm test             # 30 testes unitários (Vitest)
 npm run eval         # loop de avaliação → docs/eval-report.md
 npm run eval:robustez # avaliação em 10 bases simuladas diferentes
 npm run eval:previsao # backtest do modelo de previsão → docs/eval-previsao.md
@@ -96,7 +96,7 @@ npm run gerar-dados  # recria data/simulado.csv e o gabarito
 npm run build && npm start
 ```
 
-**Base oficial:** quando for divulgada, use *Importar planilha* e envie o arquivo (CSV ou XLSX). As colunas são reconhecidas pelo nome.
+**Base oficial:** quando for divulgada, use *Importar planilha* e envie o arquivo (CSV ou XLSX). As colunas são reconhecidas por uma lista de nomes e variações, inclusive o vocabulário do edital ("Tipo de movimentação", "Preço de aquisição (R$)", "Destino da retirada"). Antes de usar a base, a tela mostra quais colunas foram reconhecidas e as linhas rejeitadas com o motivo. Uma coluna fora da lista não é adivinhada: fica sem uso e aparece nesse relatório.
 
 **Persistência:**
 - Por padrão, os dados ficam no navegador.
@@ -132,12 +132,12 @@ npm run build && npm start
 
 O plano de teste completo, com o oráculo de cada parte e os casos de caminho feliz e de erro, está em [`TESTING.md`](TESTING.md). Separamos quatro perguntas diferentes, porque cada uma tem uma prova diferente:
 
-1. **Cada regra faz o que promete?** Sim, e isso é medido. O loop de avaliação planta situações conhecidas na base simulada e compara os alertas com o gabarito: **recall de 100% e precisão de 100%** na base principal. Detalhes em [`docs/eval-report.md`](docs/eval-report.md).
+1. **Cada regra faz o que promete?** Sim, e isso é medido. O loop de avaliação planta situações conhecidas na base simulada e compara os alertas com o gabarito: **recall de 100%** (as 17 situações plantadas foram encontradas). A precisão depende de como se contam os alertas extras: dos 23 alertas, 17 são situações plantadas e 6 estão numa lista de **aceitáveis** (`data/ground_truth.json`), alertas coerentes com os dados mas que não plantamos de propósito. Contando esses 6 como acerto, a precisão é de 100%; contando como erro, a **precisão estrita é de 74%**. Publicamos os dois números. Detalhes em [`docs/eval-report.md`](docs/eval-report.md).
 2. **As regras funcionam fora da base em que foram ajustadas?** O mesmo loop roda em 10 bases geradas com sementes diferentes: média de **recall de 100% e precisão de 98,9%**. Os falsos positivos estão listados no relatório.
 3. **O modelo de previsão é melhor que a média simples?** Medimos em vez de supor. Para cada produto, escondemos as últimas 4 semanas (em até 3 rodadas), ajustamos o modelo sem elas e comparamos com o consumo real. Nas 10 bases simuladas, o modelo erra **6,2% menos** que a média de 30 dias (WAPE de 27,3% contra 29,1%), e a faixa de 80% contém o consumo real em 87,3% das rodadas. O ganho é pequeno, e por isso **o modelo só aparece no produto em que venceu a média com folga de 5%**: nos demais, a ficha diz que a média foi melhor. Detalhes em [`docs/eval-previsao.md`](docs/eval-previsao.md).
 4. **As regras capturam o que importa numa fazenda real?** Isso o gabarito **não** prova, porque fomos nós que o construímos. A prova vem da base oficial do desafio e da conversa com quem trabalha no campo, registradas em [`docs/validacao.md`](docs/validacao.md). Até agora, apresentamos a ideia a um produtor de uma fazenda da Linha C-45, em Ariquemes. Ele disse que a ferramenta seria útil e que trabalhar com previsibilidade e dados ajudaria na gestão. Foi **uma** conversa sobre a ideia, sem uso do app, e por isso ela confirma o interesse, mas não substitui um teste com usuários.
 
-Também temos **26 testes automatizados** (leitura, unidades, valores ausentes, grafo de duplicados, DAG, detectores, meta do eval, a demonstração de reanálise e o modelo de previsão, inclusive a garantia de que ele não altera nenhum alerta). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
+Também temos **30 testes automatizados** (leitura, cabeçalhos do edital, unidades, valores ausentes, grafo de duplicados, DAG, detectores, lote vencido, vencimento com vários lotes, meta do eval, a demonstração de reanálise e o modelo de previsão, inclusive a garantia de que ele não altera nenhum alerta). Eles rodam no CI (GitHub Actions) a cada push, junto com o lint, a avaliação e o build.
 
 ### O que funciona
 
@@ -148,12 +148,21 @@ Também temos **26 testes automatizados** (leitura, unidades, valores ausentes, 
 - **Modelo de previsão de consumo** (suavização exponencial de Holt), ajustado a cada produto no navegador, com faixa de incerteza e o resultado do próprio teste na ficha. Ele só é mostrado onde venceu a média.
 - Publicado online, sem login: https://agrohack-agrosentinela.netlify.app
 
+### Corrigido depois do parecer de seleção (28/10/2026)
+
+Os pareceres da seleção apontaram três defeitos no motor. Eles já tinham sido identificados na revisão de 14/10 ([`docs/validacao-arena.md`](docs/validacao-arena.md)), mas não estavam corrigidos na versão `v1.0-entrega`. Agora estão, e cada um tem um teste de regressão que falha na versão antiga:
+
+- **Lote vencido no saldo:** o saldo passou a ter três números: o físico (tudo o que está registrado), o vencido e o **utilizável** (físico menos vencido). Cobertura, estoque crítico, ruptura, excesso e a previsão usam o utilizável, e o FEFO não dá baixa em lote vencido enquanto houver lote válido.
+- **Sobra com vários lotes:** a sobra no vencimento era superestimada quando havia mais de um lote. No caso de teste, a sobra do segundo lote caiu de 90 para 80 kg, que é o valor calculado à mão.
+- **Cabeçalhos do edital:** "Tipo de movimentação" e "Preço de aquisição (R$)" eram rejeitados. Agora são reconhecidos, e o tipo é lido pela palavra inteira, não pela letra inicial: "Saldo inicial" vira entrada, e um tipo desconhecido é rejeitado com o motivo, em vez de adivinhado.
+
 ### O que ainda pode melhorar
 
 - **Medir os alertas na base oficial** e revisar manualmente os 20 primeiros, assim que ela for divulgada.
 - **Calibrar os limiares com quem trabalha no campo.** Por exemplo: o prazo de compra de 15 dias e a sazonalidade de sementes e calcário, que hoje podem gerar "excesso" fora da safra.
 - **Previsão:** validar o modelo na base oficial, tratar a sazonalidade de safra e o consumo muito intermitente (método de Croston) e, depois de validado, usar a previsão também nos alertas. Hoje os alertas usam só a média.
 - **Testes automatizados de interface** (hoje a interface é testada pelos casos manuais do `TESTING.md`).
+- **Importação assistida:** quando uma coluna obrigatória não for reconhecida, deixar o usuário escolher a coluna à mão e perguntar o que fazer com um tipo de movimentação desconhecido, em vez de só rejeitar a linha.
 - **Várias fazendas no mesmo painel**, para cooperativas e revendas, com login e regras de acesso por fazenda.
 - **Limitações das estimativas:** ver a seção "Limites" em [`docs/criterios-alertas.md`](docs/criterios-alertas.md). Segurança e dependências estão em [`SECURITY.md`](SECURITY.md).
 

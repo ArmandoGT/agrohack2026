@@ -61,5 +61,6 @@ A lista é ordenada por nível e, dentro do nível, por score.
 - **Sazonalidade:** as projeções supõem que o consumo recente continua. Não modelam a sazonalidade de safra (ex.: sementes no plantio). Por isso, alertas de produtos sazonais devem ser lidos junto com o calendário agrícola.
 - **Histórico curto:** com poucas retiradas, a estimativa é marcada como de baixa confiança.
 - **Lote nas saídas:** quando a saída não informa o lote, assumimos FEFO. Se a fazenda usar outra ordem, o risco de vencimento pode ser subestimado.
+- **Lote vencido:** fica no saldo físico, mas não entra no saldo utilizável, que é a base de cobertura, compra, ruptura e excesso. As retiradas só dão baixa em lote vencido quando não há lote válido (por exemplo, no descarte).
 - **Campos ausentes:** preço ausente fica fora do valor (marcado como estimado) e validade ausente impede a análise de vencimento. Nenhum dos dois vira zero.
 - **Estoque mínimo e prazo:** o mínimo vem dos registros. O prazo de compra (15 dias) é um padrão configurável, não um dado da base.

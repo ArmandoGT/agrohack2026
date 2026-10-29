@@ -1,7 +1,7 @@
 # Roteiro do vídeo demonstrativo (2 a 3 minutos)
 
 Gravar em 1920×1080 com OBS ou a gravação de tela do Windows (Win+Alt+R). Ajustar o zoom do navegador para 110% e usar o microfone de um headset.
-Para gerar o vídeo automaticamente (legendado, sem som, para a equipe narrar por cima), rodar `npm run gravar-video`: ele segue esta tabela, inclusive os tempos e a narração. Ver "Como regenerar o vídeo" no README.
+Para gerar o vídeo automaticamente (legendado, sem som, para a equipe narrar por cima), rodar `npm run gravar-video`: ele segue esta tabela, inclusive os tempos e a narração.
 Base: a **oficial**, se já divulgada. Se não, a simulada, deixando claro o aviso "DADOS SIMULADOS".
 
 | # | Tempo | Tela | Narração |

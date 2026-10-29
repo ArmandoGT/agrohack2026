@@ -398,7 +398,7 @@ function Capa() {
       <Filete largura={1150} atraso={1.1} style={{ marginTop: 34 }} />
       <Entra atraso={1.35}><p style={{ fontFamily: TITULO, fontSize: 62, fontWeight: 500, color: C.ouroClaro, margin: "26px 0 0" }}>O agrônomo de bolso do estoque.</p></Entra>
       <Entra atraso={1.7}><p style={{ fontSize: 36, lineHeight: 1.45, color: C.nevoa, width: 1050, margin: "22px 0 0" }}>Lê a planilha que a fazenda já tem e diz <b style={{ color: C.marfim }}>o que fazer hoje</b>, <b style={{ color: C.marfim }}>por quê</b> e <b style={{ color: C.marfim }}>quanto dá para confiar</b>.</p></Entra>
-      <p style={{ position: "absolute", left: 128, bottom: 70, fontSize: 24, color: C.nevoa, margin: 0 }}>IFRO Campus Ariquemes · SNCT · 29/10/2026</p>
+      <p style={{ position: "absolute", left: 128, bottom: 70, fontSize: 24, color: C.nevoa, margin: 0 }}>IFRO Campus Ariquemes · Final · 30/10/2026</p>
     </Base>
   );
 }
@@ -613,7 +613,7 @@ function Motor() {
     ["Normalização", "vazio ≠ zero, kg ≠ litro"],
     ["Grafo de cadastros", "KCl = Cloreto de potássio"],
     ["Saldos por lote", "vence primeiro, sai primeiro"],
-    ["10 detectores", "rodam em paralelo"],
+    ["10 detectores", "independentes, sobre os saldos"],
     ["Prioridade", "nível + urgência + R$ + confiança"],
   ];
   const detectores = ["Estoque crítico", "Vai faltar em breve", "Consumo em alta", "Retirada fora do padrão", "Vencimento por lote", "Excesso", "Variação de preço", "Dinheiro parado", "Cadastro duplicado", "Qualidade dos dados"];

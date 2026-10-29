@@ -1,4 +1,6 @@
-# Pitch de venda: 5 minutos (29/10/2026, SNCT)
+# Pitch de venda (versão de 5 minutos da seleção)
+
+> Para a final de 30/10/2026 (10 minutos, com demonstração ao vivo), o roteiro em uso é o `roteiro-final-30-10.md`, mantido fora do repositório. Este documento registra a versão da seleção.
 
 > **Mindset:** a banca não está comprando um sistema pronto, está comprando **uma ideia que resolve uma dor real e que dá para executar**. Cada minuto do pitch serve para responder a uma pergunta dela: *isso importa? funciona? esses caras sabem o que estão fazendo? isso vai longe?*
 
@@ -18,7 +20,6 @@
   - se o computador estiver com **"reduzir movimento"** ligado, os slides só fazem fade: o destaque troca de ponto sem zoom.
 - **Recapturar as telas** (por exemplo, com a base oficial): com o app rodando (`npm run build && npm start`), rode `npm run capturar-telas -- pitch`. O script regrava `public/pitch/*.png` nos mesmos estados e `src/app/pitch/focos.json`, com o tamanho de cada tela e os pontos do zoom. No Linux, indique o navegador com `EDGE_PATH=/caminho/do/chrome`.
 - **Base oficial:** quando ela sair, refazer as capturas com ela e trocar os números dos slides 6 a 9.
-- **Prévia:** [capa](img/pitch/slide-01-capa.jpg), [a dor](img/pitch/slide-02-dor.jpg), [momento 4 da demo](img/pitch/slide-09-momento4.jpg), [por que confiar](img/pitch/slide-11-confianca.jpg); transições: [abertura](img/pitch/transicao-abertura.gif) e [momento 3](img/pitch/transicao-momento3.gif).
 
 ## A frase que a banca tem de levar para casa
 
@@ -79,7 +80,7 @@ Mostrem só passos que já foram ensaiados e que **não podem dar errado**. Cada
 > Agora, honestidade: fomos nós que criamos essa base, então isso prova que cada regra faz o que diz, não que acerta tudo no mundo real. Por isso [validamos com X, de Agronomia, que nos fez mudar Y] e [rodamos a base oficial do desafio].
 > E cada alerta é uma regra que sabemos explicar: média de consumo, mediana para achar retirada estranha, prazo de validade por lote. Usamos IA para **construir** o sistema, e isso está declarado. O sistema em si não depende de IA para decidir."
 
-*Na tela: Como funciona → grafo do pipeline (os detectores rodando em paralelo).*
+*Na tela: Como funciona → grafo do pipeline (os detectores independentes, cada um lendo só os saldos).*
 
 > Só digam a frase entre colchetes se ela for verdade no dia. Senão, cortem.
 

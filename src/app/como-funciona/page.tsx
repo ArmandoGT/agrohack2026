@@ -106,7 +106,7 @@ export default function ComoFunciona() {
 
       <Card className="mt-5">
         <h2 className="text-xl font-semibold md:text-2xl">Pipeline de análise (grafo acíclico)</h2>
-        <p className="mt-0.5 mb-3 text-sm text-muted">Cada caixa é uma etapa. Os detectores (em verde) rodam em paralelo sobre os saldos e alimentam o score de prioridade. Tempos reais desta execução.</p>
+        <p className="mt-0.5 mb-3 text-sm text-muted">Cada caixa é uma etapa. Os detectores (em verde) são independentes entre si: cada um lê só os saldos e alimenta o score de prioridade. Hoje rodam um depois do outro. Tempos reais desta execução.</p>
         <Dag nos={analise.dag} />
       </Card>
 

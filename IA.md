@@ -35,6 +35,7 @@ Estes casos mostram por que a revisão humana é parte do método, e não um det
 | O projeto usava o Next.js 15.5.4, com a vulnerabilidade crítica CVE-2025-55182 | A Netlify bloqueou o deploy | Atualização para o Next.js 15.5.28 e o React 19.1.10, com todos os testes passando |
 | O zoom do pitch em "câmera de tela cheia", que avançava sozinho | Ensaio visual: não ficaria bom no telão | Recusado. Refeito como zoom dentro do quadro do print, controlado pelo passador |
 | O redesenho trocou os nomes do menu ("Registrar entrada ou saída", "Importar planilha"), mas o README e o roteiro do vídeo continuaram com os nomes antigos | Revisão do PR #1 | Documentação atualizada no mesmo PR |
+| O motor tinha três defeitos (lote vencido no saldo, sobra superestimada com vários lotes e cabeçalhos do edital rejeitados). Eles foram apontados em 14/10 por uma revisão feita com IA (`docs/validacao-arena.md`), mas **não foram corrigidos antes da entrega** | Os pareceres da seleção de 28/10 cobraram os mesmos pontos | Corrigidos em 28/10, cada um com um teste de regressão que falha na versão antiga; a precisão estrita passou a ser publicada ao lado da precisão com aceitáveis |
 | A primeira métrica de qualidade (100% de acerto) era medida só na base que nós mesmos geramos | Comparando com o projeto vencedor do hackathon anterior, que caiu na mesma armadilha | O README e o `TESTING.md` agora separam o que o número prova (cada regra faz o que diz) do que só a base oficial e os usuários podem provar |
 
 ## O que a equipe decidiu
