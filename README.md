@@ -6,7 +6,7 @@
 
 **Link da solução:** [agrohack-agrosentinela.netlify.app](https://agrohack-agrosentinela.netlify.app) (slides do pitch em [`/pitch`](https://agrohack-agrosentinela.netlify.app/pitch))\
 **Vídeo demonstrativo:** [youtu.be/t3ghbFW5BiI](https://youtu.be/t3ghbFW5BiI)\
-**Versão avaliada:** tag `v1.0-entrega`
+**Versão da final:** tag `v2.0-final` (a seleção avaliou a `v1.0-entrega`)
 
 ---
 
@@ -183,7 +183,8 @@ Os pareceres da seleção apontaram três defeitos no motor. Eles já tinham sid
 
 ## 10. Versão de entrega
 
-Tag `v1.0-entrega`, criada em 27/10/2026 sobre o último commit da `main`, e publicada também como [release no GitHub](https://github.com/ArmandoGT/agrohack2026/releases/tag/v1.0-entrega). Para conferir o commit avaliado: `git show v1.0-entrega`.
+- **Final (30/10/2026):** tag `v2.0-final`, criada em 28/10/2026 sobre o último commit da `main`, com [release no GitHub](https://github.com/ArmandoGT/agrohack2026/releases/tag/v2.0-final). Traz as correções feitas depois do parecer de seleção (seção 7). Para conferir: `git show v2.0-final`.
+- **Seleção (27/10/2026):** tag `v1.0-entrega`, com [release no GitHub](https://github.com/ArmandoGT/agrohack2026/releases/tag/v1.0-entrega). É a versão avaliada pelos pareceres de seleção.
 
 ---
 
