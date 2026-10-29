@@ -52,8 +52,8 @@ Estes casos mostram por que a revisão humana é parte do método, e não um det
 | Integrante | O que revisou | Como verificou |
 |---|---|---|
 | Armando Giordani Trassi | Planos e PRs #1 a #3, demo de reanálise, deploy, pitch | Revisão dos planos antes do código, teste no navegador e no celular, ensaio do pitch |
-| Pedro Felipe Vieira Gouveia | _(a registrar pelo integrante)_ | |
-| Leandro Pires de Moraes Filho | _(a registrar pelo integrante)_ | |
+| Pedro Felipe Vieira Gouveia | Motor de análise e loop de avaliação: critérios dos alertas, limiares e resultados do eval | Revisão das propostas e dos resultados, com opiniões levadas à equipe antes das decisões |
+| Leandro Pires de Moraes Filho | Interface, deploy e vídeo: telas, textos dos alertas e materiais de apresentação | Revisão das telas e dos materiais, com opiniões levadas à equipe antes das decisões |
 
 ## Cuidados
 
